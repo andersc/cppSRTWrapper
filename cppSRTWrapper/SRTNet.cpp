@@ -16,7 +16,6 @@ SRTNet::~SRTNet() {
     srt_cleanup();
     std::cout << __FILE__ << " " << __LINE__ << ": SRTNet destruct" << std::endl;
 }
-}
 
 void SRTNet::init() {
     srt_startup();
