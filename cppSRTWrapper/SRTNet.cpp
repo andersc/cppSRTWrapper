@@ -18,5 +18,5 @@ SRTNet::~SRTNet() {
 }
 
 void SRTNet::init() {
-    srt_startup();
+
 }

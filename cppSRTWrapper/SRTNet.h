@@ -8,6 +8,8 @@
 #include <iostream>
 
 #include "../srt/srtcore/srt.h"
+#include "SRTGlobalHandler.h"
+
 
 class SRTNet {
 public:
@@ -16,6 +18,9 @@ public:
     virtual ~SRTNet();
 
     void init();
+private:
+
+    SRTGlobalHandler& pSRTHandler = SRTGlobalHandler::GetInstance();
 
 };
 
