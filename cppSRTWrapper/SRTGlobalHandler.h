@@ -7,29 +7,57 @@
 
 #include <iostream>
 #include <atomic>
+#include <sstream>
 
 #include "../srt/srtcore/srt.h"
 
+// GLobal Logger -- Start
+
+#define DEBUG  //Turn logging on/off
+
+#define LOGG_NOTIFY 1
+#define LOGG_WARN 2
+#define LOGG_ERROR 3
+#define LOGG_FATAL 4
+
+#ifdef DEBUG
+#define LOGGER(l,g,f) \
+{ \
+std::ostringstream a; \
+if (g == LOGG_NOTIFY) {a << "Notification: ";} \
+else if (g == LOGG_WARN) {a << "Warning: ";} \
+else if (g == LOGG_ERROR) {a << "Error: ";} \
+else if (g == LOGG_FATAL) {a << "Fatal: ";} \
+else  {a << "Log level unknown: ";} \
+if (l) {a << __FILE__ << " " << __LINE__ << " ";} \
+a << f << std::endl; \
+std::cout << a.str(); \
+}
+#else
+#define LOGGER(l,g,f)
+#endif
+// GLobal Logger -- End
+
 class SRTGlobalHandler {
 private:
-    std::atomic<int> intNumConnections; //Unused
+
 
     SRTGlobalHandler(){
-        std::cout << __FILE__ << " " << __LINE__ << ": SRTGlobalHandler constructed:" << std::endl;
+        LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler constructed")
         intNumConnections=0;
         int result=srt_startup();
         if (result) {
-            std::cout << __FILE__ << " " << __LINE__ << ": srt_startup failed." << std::endl;
+            LOGGER(true, LOGG_FATAL, "srt_startup failed")
         }
     };
     ~SRTGlobalHandler(){
-        std::cout << __FILE__ << " " << __LINE__ << ": SRTGlobalHandler destruct:" << std::endl;
+        LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler destruct")
         if (intNumConnections) {
-            std::cout << __FILE__ << " " << __LINE__ << ": SRT garbage collection when connections still active:" << std::endl;
+            LOGGER(true, LOGG_WARN, "srt_cleanup when connections still active: " << intNumConnections)
         }
         int result=srt_cleanup();
         if (result) {
-            std::cout << __FILE__ << " " << __LINE__ << ": srt_cleanup failed." << std::endl;
+            LOGGER(true, LOGG_ERROR, "srt_cleanup failed")
         }
     };
 
@@ -41,7 +69,7 @@ private:
 
 public:
     static SRTGlobalHandler& GetInstance();
-    int getActiveConnections() {return intNumConnections;}
+    std::atomic<int> intNumConnections; //for debugging connections
 };
 
 #endif //CPPSRTWRAPPER_SRTGLOBALHANDLER_H

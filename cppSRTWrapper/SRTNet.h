@@ -7,14 +7,12 @@
 
 #include <iostream>
 #include <functional>
-#include <sstream>
 #include <atomic>
 #include <thread>
 #include <stdlib.h>
 
 #include "../srt/srtcore/srt.h"
 #include "SRTGlobalHandler.h"
-
 
 class SRTNet {
 public:
@@ -37,6 +35,7 @@ public:
     std::function<bool(struct sockaddr_storage& connectingClient)> clientConnected;
     std::function<bool(uint8_t*, size_t)> recievedData;
     std::atomic<bool> serverActive;
+    std::atomic<bool> serverThreadActive;
 
 private:
     void waitForSRTClient();
