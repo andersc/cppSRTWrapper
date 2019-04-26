@@ -9,6 +9,7 @@
 #include <functional>
 #include <atomic>
 #include <thread>
+#include <vector>
 #include <stdlib.h>
 
 #include "../srt/srtcore/srt.h"
@@ -23,22 +24,31 @@ public:
     };
 
     SRTNet();
-    SRTNet(const SRTNet& orig);
     virtual ~SRTNet();
 
-    bool startServer(std::string ip, std::string port);
-    bool startClient(std::string host, std::string port);
+    bool startServer(std::string ip, std::string port, int reorder); //IP, PORT, SRTO_LOSSMAXTTL value
+    bool startClient(std::string host, std::string port, int32_t latency); //IP, PORT, SRTO_LATENCY value
     bool stopServer();
     bool stopClient();
-    bool sendData(uint8_t* data, size_t len);
+    bool sendData(uint8_t* data, size_t len, SRT_MSGCTRL *msgCtrl);
+    bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous);
 
-    std::function<bool(struct sockaddr_storage& connectingClient)> clientConnected;
-    std::function<bool(uint8_t*, size_t)> recievedData;
+    std::function<bool(uint8_t* ip)> clientConnected;
+    std::function<bool(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl)> recievedData;
     std::atomic<bool> serverActive;
+    std::atomic<bool> clientActive;
     std::atomic<bool> serverThreadActive;
+    std::atomic<bool> clientThreadActive;
 
 private:
+    // delete copy and move constructors and assign operators
+    SRTNet(SRTNet const&) = delete;             // Copy construct
+    SRTNet(SRTNet&&) = delete;                  // Move construct
+    SRTNet& operator=(SRTNet const&) = delete;  // Copy assign
+    SRTNet& operator=(SRTNet &&) = delete;      // Move assign
+
     void waitForSRTClient();
+    void serverResponce();
     SRTGlobalHandler& pSRTHandler = SRTGlobalHandler::GetInstance();
     SRTSOCKET context;
     SRTSOCKET their_fd;

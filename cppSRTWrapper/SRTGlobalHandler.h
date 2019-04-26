@@ -41,7 +41,6 @@ std::cout << a.str(); \
 class SRTGlobalHandler {
 private:
 
-
     SRTGlobalHandler(){
         LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler constructed")
         intNumConnections=0;
