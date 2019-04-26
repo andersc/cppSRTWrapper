@@ -87,8 +87,9 @@ void SRTNet::waitForSRTClient() {
         int addr_size = sizeof their_addr;
         their_fd = srt_accept(context, (struct sockaddr *) &their_addr, &addr_size);
         pSRTHandler.intNumConnections++;
+
+
         struct sockaddr_in *sin = (struct sockaddr_in *)&their_addr;
-        unsigned char* ip = (uint8_t*)&sin->sin_addr.s_addr;
         LOGGER(true, LOGG_NOTIFY, "Client connected");
 
         if (!clientConnected) {
@@ -104,7 +105,7 @@ void SRTNet::waitForSRTClient() {
             return;
         }
 
-        if (clientConnected(ip)) {
+        if (clientConnected(sin)) {
             while (serverActive) {
                 uint8_t msg[2048];
                 SRT_MSGCTRL thisMSGCTRL = srt_msgctrl_default;

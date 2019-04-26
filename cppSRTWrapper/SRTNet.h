@@ -33,7 +33,7 @@ public:
     bool sendData(uint8_t* data, size_t len, SRT_MSGCTRL *msgCtrl);
     bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous);
 
-    std::function<bool(uint8_t* ip)> clientConnected;
+    std::function<bool(struct sockaddr_in* sin)> clientConnected;
     std::function<bool(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl)> recievedData;
     std::atomic<bool> serverActive;
     std::atomic<bool> clientActive;

@@ -14,7 +14,8 @@
 //**********************************
 //Server part
 //**********************************
-bool validateConnection(uint8_t* ip) {
+bool validateConnection(struct sockaddr_in* sin) {
+    unsigned char* ip = (unsigned char*)&sin->sin_addr.s_addr;
     std::cout << "Connecting IP: " << unsigned(ip[0]) << "." <<unsigned(ip[1]) << "." << unsigned(ip[2]) << "." << unsigned(ip[3]) << std::endl;
     return true;
 };
