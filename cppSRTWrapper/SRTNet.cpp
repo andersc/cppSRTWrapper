@@ -20,7 +20,7 @@ SRTNet::~SRTNet() {
     LOGGER(true, LOGG_NOTIFY, "SRTNet destruct")
 }
 
-bool SRTNet::startServer(std::string ip, std::string port, int reorder) {
+bool SRTNet::startServer(std::string ip, std::string port, int reorder, int32_t latency, int overhead) {
     int result = 0;
     struct sockaddr_in sa;
     int32_t yes = 1;
@@ -47,8 +47,26 @@ bool SRTNet::startServer(std::string ip, std::string port, int reorder) {
         return false;
     }
 
-    srt_setsockflag(context, SRTO_RCVSYN, &yes, sizeof yes);
-    srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
+    result = srt_setsockflag(context, SRTO_RCVSYN, &yes, sizeof yes);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_RCVSYN: " << srt_getlasterror_str())
+        return false;
+    }
+    result = srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str())
+        return false;
+    }
+    result = srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str())
+        return false;
+    }
+    result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str())
+        return false;
+    }
 
     result = srt_bind(context, (struct sockaddr*) &sa, sizeof sa);
     if (result == SRT_ERROR) {
@@ -126,7 +144,7 @@ void SRTNet::waitForSRTClient() {
     serverThreadActive = false;
 }
 
-bool SRTNet::startClient(std::string host, std::string port, int32_t latency) {
+bool SRTNet::startClient(std::string host, std::string port, int reorder, int32_t latency, int overhead) {
     if (currentMode != Mode::Unknown) {
         LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set")
         return false;
@@ -154,8 +172,26 @@ bool SRTNet::startClient(std::string host, std::string port, int32_t latency) {
         return false;
     }
 
-    srt_setsockflag(context, SRTO_SENDER, &yes, sizeof yes);
-    srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
+    result = srt_setsockflag(context, SRTO_SENDER, &yes, sizeof yes);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_SENDER: " << srt_getlasterror_str())
+        return false;
+    }
+    result = srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str())
+        return false;
+    }
+    result = srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str())
+        return false;
+    }
+    result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str())
+        return false;
+    }
 
     LOGGER(true, LOGG_NOTIFY, "SRT connect");
     result = srt_connect(context, (struct sockaddr*) &sa, sizeof sa);

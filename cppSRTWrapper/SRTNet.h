@@ -12,7 +12,6 @@
 #include <vector>
 #include <stdlib.h>
 
-#include "../srt/srtcore/srt.h"
 #include "SRTGlobalHandler.h"
 
 class SRTNet {
@@ -26,8 +25,8 @@ public:
     SRTNet();
     virtual ~SRTNet();
 
-    bool startServer(std::string ip, std::string port, int reorder); //IP, PORT, SRTO_LOSSMAXTTL value
-    bool startClient(std::string host, std::string port, int32_t latency); //IP, PORT, SRTO_LATENCY value
+    bool startServer(std::string ip, std::string port, int reorder, int32_t latency, int overhead);
+    bool startClient(std::string host, std::string port, int reorder, int32_t latency, int overhead);
     bool stopServer();
     bool stopClient();
     bool sendData(uint8_t* data, size_t len, SRT_MSGCTRL *msgCtrl);

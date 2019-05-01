@@ -43,13 +43,13 @@ int main(int argc, const char * argv[]) {
 
     mySRTNetServer.clientConnected=std::bind(&validateConnection, std::placeholders::_1);
     mySRTNetServer.recievedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2);
-    if (!mySRTNetServer.startServer("0.0.0.0","8000",16)) {
+    if (!mySRTNetServer.startServer("0.0.0.0","8000",16,1000,100)) {
         std::cout << "SRT Server failed to start." << std::endl;
         return EXIT_FAILURE;
     }
 
     mySRTNetClient.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2);
-    if (!mySRTNetClient.startClient("127.0.0.1","8000",1000)) {
+    if (!mySRTNetClient.startClient("127.0.0.1","8000",16,1000,100)) {
         std::cout << "SRT client failed start." << std::endl;
         return EXIT_FAILURE;
     }
