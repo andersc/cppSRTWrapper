@@ -14,6 +14,7 @@
 //**********************************
 //Server part
 //**********************************
+
 bool validateConnection(struct sockaddr_in* sin) {
     unsigned char* ip = (unsigned char*)&sin->sin_addr.s_addr;
     std::cout << "Connecting IP: " << unsigned(ip[0]) << "." <<unsigned(ip[1]) << "." << unsigned(ip[2]) << "." << unsigned(ip[3]) << std::endl;
@@ -21,7 +22,7 @@ bool validateConnection(struct sockaddr_in* sin) {
 };
 
 bool handleData(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl){
-    std::cout << "Got ->" << data->size() << std::endl;
+    std::cout << "Got ->" << data->size() << " " << msgCtrl.pktseq << std::endl;
     return true;
 };
 
@@ -59,6 +60,7 @@ int main(int argc, const char * argv[]) {
     std::cout << "SRT Start send." << std::endl;
     while (true) {
         SRT_MSGCTRL thisMSGCTRL = srt_msgctrl_default;
+        //thisMSGCTRL.flags=times/4;
         mySRTNetClient.sendData(&data[0], 1000, &thisMSGCTRL);
         usleep(10000); //wait 10 mili
         if (times++ == 300) {
