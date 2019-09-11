@@ -13,4 +13,5 @@ jobs:
       run: git submodule update --init --recursive
     - name: buildall
       run: ./buildALL.sh
+      shell: bash
 
