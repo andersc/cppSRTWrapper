@@ -3,28 +3,59 @@
 //
 //
 
-// Simple SRT C++ wrapper where the server only accept one client
-// Use this for simple point to point SRT tests
+// Simple SRT C++ wrapper
+// The code in this sample project tests the wrapper and shows how to use it
+// The code is NOT optimized for performance.. For performance you need to write your own wrapper
+// and not use smart pointers and callbacks in the dataplane.
 
 #include <iostream>
 #include <thread>
 
 #include "SRTNet.h"
 
+SRTNet mySRTNetServer;
+SRTNet mySRTNetClient1;
+SRTNet mySRTNetClient2;
+
 //**********************************
 //Server part
 //**********************************
 
-//Return true if the connection should be accepted by the server.
-bool validateConnection(struct sockaddr_in* sin) {
+//Return a connection object. (Return nullptr if you don't want to connect to that client)
+std::shared_ptr<NetworkConnection> validateConnection(struct sockaddr_in* sin) {
     auto* ip = (unsigned char*)&sin->sin_addr.s_addr;
     std::cout << "Connecting IP: " << unsigned(ip[0]) << "." << unsigned(ip[1]) << "." << unsigned(ip[2]) << "." << unsigned(ip[3]) << std::endl;
-    return true;
+    return std::make_shared<NetworkConnection>();
 }
 
 //Data callback.
-bool handleData(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl){
-    std::cout << "Got ->" << data->size() << " " << msgCtrl.pktseq << std::endl;
+bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET clientHandle) {
+
+    if (!ctx->isKnown) { //just a example/test. This connection is unknown. See what connection it is and set the test-parameter accordingly
+        if (content->data()[0] == 1) {
+            ctx->isKnown=true;
+            ctx->test = 1;
+        }
+
+        if (content->data()[0] == 2) {
+            ctx->isKnown=true;
+            ctx->test = 2;
+        }
+    }
+
+    if (ctx->isKnown) {
+        if (ctx->counter++ == 100) { //every 100 packet you got respond back to the client using the same data.
+            ctx->counter = 0;
+            SRT_MSGCTRL thisMSGCTRL = srt_msgctrl_default;
+            mySRTNetServer.sendData(content->data(), content->size(), &thisMSGCTRL,clientHandle);
+        }
+    }
+
+    std::cout << "Got ->" << content->size() << " " << ctx->test << std::endl;
+
+
+
+
     return true;
 };
 
@@ -33,21 +64,31 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCt
 //**********************************
 
 //Server sent back data callback.
-bool handleDataClient(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl){
-    std::cout << "Got client data ->" << data->size() << std::endl;
+bool handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET serverHandle){
+    int packetSize=content->size();
+    if (ctx->test == 1) {
+        std::cout << "Got client1 data ->" << packetSize << std::endl;
+        ctx->counter++;
+        if (ctx->counter == 1) { //kill this connection after 1 packet from server
+            std::cout << "Stop client 1" << std::endl;
+            mySRTNetClient1.stopClient();
+        }
+        return true;
+    }
+    if (ctx->test == 2) {
+        std::cout << "Got client2 data ->" << packetSize << std::endl;
+        return true;
+    }
     return true;
 };
 
 int main(int argc, const char * argv[]) {
 
-    SRTNet mySRTNetServer;
-    SRTNet mySRTNetClient;
-
     std::cout << "SRT wrapper start." << std::endl;
 
     //Register the server callbacks
     mySRTNetServer.clientConnected=std::bind(&validateConnection, std::placeholders::_1);
-    mySRTNetServer.recievedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2);
+    mySRTNetServer.recievedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
     /*Start the server
      * ip: bind to this ip
      * port: bind to this port
@@ -55,46 +96,83 @@ int main(int argc, const char * argv[]) {
      * latency: the max latency in milliseconds before dropping the data
      * overhead: The % overhead tolerated for retransmits relative the original data stream.
      */
-    if (!mySRTNetServer.startServer("0.0.0.0","8000",16,1000,100)) {
+    if (!mySRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100)) {
         std::cout << "SRT Server failed to start." << std::endl;
         return EXIT_FAILURE;
     }
 
     //The SRT connection is bidirectional and you are able to set different parameters for a particular direction
     //The parameters have the same meaning as for the above server but on the client side.
-    mySRTNetClient.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2);
-    if (!mySRTNetClient.startClient("127.0.0.1","8000",16,1000,100)) {
-        std::cout << "SRT client failed start." << std::endl;
+    auto client1Connection=std::make_shared<NetworkConnection>();
+    client1Connection->test=1;
+    mySRTNetClient1.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    if (!mySRTNetClient1.startClient("127.0.0.1", 8000, 16, 1000, 100,client1Connection)) {
+        std::cout << "SRT client1 failed starting." << std::endl;
         return EXIT_FAILURE;
     }
 
+    auto client2Connection=std::make_shared<NetworkConnection>();
+    client2Connection->test=2;
+    mySRTNetClient2.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    if (!mySRTNetClient2.startClient("127.0.0.1", 8000, 16, 1000, 100,client2Connection)) {
+        std::cout << "SRT client2 failed starting." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    sleep(2);
+
     //Send 300 packets with 10 milliseconds spacing. Packets are 1000 bytes long
-    int times=0;
-    uint8_t data[2048];
+    int times = 0;
+
+    std::vector<uint8_t>buffer1(1000);
+    std::fill (buffer1.begin(),buffer1.end(),1);
+    std::vector<uint8_t>buffer2(1000);
+    std::fill (buffer2.begin(),buffer2.end(),2);
+
     std::cout << "SRT Start send." << std::endl;
+
+    bool stillSendClient1Data = true;
+
     while (true) {
-        SRT_MSGCTRL thisMSGCTRL = srt_msgctrl_default;
-        mySRTNetClient.sendData(&data[0], 1000, &thisMSGCTRL);
+        SRT_MSGCTRL thisMSGCTRL1 = srt_msgctrl_default;
+        if (stillSendClient1Data) {
+            stillSendClient1Data = mySRTNetClient1.sendData(buffer1.data(), buffer1.size(), &thisMSGCTRL1);
+        }
+
+        SRT_MSGCTRL thisMSGCTRL2 = srt_msgctrl_default;
+        mySRTNetClient2.sendData(buffer2.data(), buffer2.size(), &thisMSGCTRL2);
+
         usleep(10000); //wait 10 milli
         if (times++ == 300) {
             break;
         }
     }
 
+    std::cout << "Done sending" << std::endl;
+    sleep(4);
+    std::cout << "Get statistics." << std::endl;
+
     //Get statistics like this ->
     /*
-     * Clear 0 == Do not reset statistics after being read 1 == clear statistics after being read
-     * instantaneous == 1 if the statistics should use instant data, not moving averages
+     * SRTNetClearStats::no == Do not reset statistics after being read SRTNetClearStats::yes == clear statistics after being read
+     * instantaneous == 1 if the statistics should be the instant data, not moving averages
      */
-    SRT_TRACEBSTATS currentClientStats = {0};
-    mySRTNetClient.getStatistics(&currentClientStats,1,0);
+    SRT_TRACEBSTATS currentClientStats1 = {0};
+    mySRTNetClient1.getStatistics(&currentClientStats1,SRTNetClearStats::yes,SRTNetInstant::no);
+
+    SRT_TRACEBSTATS currentClientStats2 = {0};
+    mySRTNetClient2.getStatistics(&currentClientStats2,SRTNetClearStats::yes,SRTNetInstant::no);
 
     SRT_TRACEBSTATS currentServerStats = {0};
-    mySRTNetServer.getStatistics(&currentServerStats,1,0);
+    //mySRTNetServer.getStatistics(&currentServerStats,SRTNetClearStats::yes,SRTNetInstant::no);
 
-    std::cout << "SRT End send." << std::endl;
-    mySRTNetClient.stopClient();
+    std::cout << "SRT garbagecollect" << std::endl;
     mySRTNetServer.stopServer();
+    sleep(1);
+    mySRTNetClient1.stopClient();
+    mySRTNetClient2.stopClient();
+
+
     std::cout << "SRT wrapper did end." << std::endl;
     return EXIT_SUCCESS;
 }

@@ -11,32 +11,61 @@
 #include <thread>
 #include <vector>
 #include <cstdlib>
+#include <map>
+#include <mutex>
 
 #include "SRTGlobalHandler.h"
+
+//Fill this class with all information you need for the duration of the connection both client and server
+class NetworkConnection {
+public:
+    NetworkConnection() {
+        isKnown = false;
+    };
+    int test = 0;
+    int counter = 0;
+    std::atomic_bool isKnown;
+};
+
+namespace  SRTNetClearStats {
+    enum SRTNetClearStats : int {
+        no,
+        yes
+    };
+}
+
+namespace  SRTNetInstant {
+     enum SRTNetInstant : int {
+        no,
+        yes
+    };
+}
+
 
 class SRTNet {
 public:
     enum Mode {
-        Unknown,
-        Server,
-        Client
+        unknown,
+        server,
+        client
     };
 
     SRTNet();
     virtual ~SRTNet();
 
-    bool startServer(std::string ip, std::string port, int reorder, int32_t latency, int overhead);
-    bool startClient(std::string host, std::string port, int reorder, int32_t latency, int overhead);
+    bool startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead);
+    bool startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> ctx);
     bool stopServer();
     bool stopClient();
-    bool sendData(uint8_t* data, size_t len, SRT_MSGCTRL *msgCtrl);
-    bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous);
+    bool sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem = 0);
+    bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous, SRTSOCKET targetSystem = 0);
 
-    std::function<bool(struct sockaddr_in* sin)> clientConnected = nullptr;
-    std::function<bool(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl)> recievedData = nullptr;
+    std::function<std::shared_ptr<NetworkConnection>(struct sockaddr_in* sin)> clientConnected = nullptr;
+    std::function<bool(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET)> recievedData = nullptr;
     std::atomic<bool> serverActive;
     std::atomic<bool> clientActive;
-    std::atomic<bool> serverThreadActive;
+    std::atomic<bool> serverListenThreadActive;
+    std::atomic<bool> serverPollThreadActive;
     std::atomic<bool> clientThreadActive;
 
     // delete copy and move constructors and assign operators
@@ -47,11 +76,17 @@ public:
 
 private:
     void waitForSRTClient();
-    void serverResponce();
+    void serverEventHandler();
+    void clientWorker();
+    void closeAllClientSockets();
     SRTGlobalHandler& pSRTHandler = SRTGlobalHandler::GetInstance();
     SRTSOCKET context = 0;
-    SRTSOCKET their_fd = 0;
-    Mode currentMode = Mode::Unknown;
+    int poll_id = 0;
+    std::mutex netMtx;
+    std::mutex clientListMtx;
+    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList;
+    Mode currentMode = Mode::unknown;
+    std::shared_ptr<NetworkConnection> clientContext = nullptr;
 };
 
 #endif //CPPSRTWRAPPER_SRTNET_H
