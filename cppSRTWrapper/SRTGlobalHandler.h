@@ -13,26 +13,28 @@
 
 // GLobal Logger -- Start
 
-#define DEBUG  //Turn logging on/off
 
 #define LOGG_NOTIFY 1
 #define LOGG_WARN 2
-#define LOGG_ERROR 3
-#define LOGG_FATAL 4
+#define LOGG_ERROR 4
+#define LOGG_FATAL 8
+#define LOGG_MASK  LOGG_NOTIFY | LOGG_WARN | LOGG_ERROR | LOGG_FATAL //What to logg?
+#define DEBUG  //Turn logging on/off
 
 #ifdef DEBUG
 #define LOGGER(l,g,f) \
 { \
 std::ostringstream a; \
-if (g == LOGG_NOTIFY) {a << "Notification: ";} \
-else if (g == LOGG_WARN) {a << "Warning: ";} \
-else if (g == LOGG_ERROR) {a << "Error: ";} \
-else if (g == LOGG_FATAL) {a << "Fatal: ";} \
-else  {a << "Log level unknown: ";} \
+if (g == (LOGG_NOTIFY & (LOGG_MASK))) {a << "Notification: ";} \
+else if (g == (LOGG_WARN & (LOGG_MASK))) {a << "Warning: ";} \
+else if (g == (LOGG_ERROR & (LOGG_MASK))) {a << "Error: ";} \
+else if (g == (LOGG_FATAL & (LOGG_MASK))) {a << "Fatal: ";} \
+if (a.str().length()) { \
 if (l) {a << __FILE__ << " " << __LINE__ << " ";} \
 a << f << std::endl; \
 std::cout << a.str(); \
-}
+} \
+}srt_bistats
 #else
 #define LOGGER(l,g,f)
 #endif
@@ -42,21 +44,21 @@ class SRTGlobalHandler {
 private:
 
     SRTGlobalHandler(){
-        LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler constructed")
+        LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler constructed");
         intNumConnections=0;
         int result=srt_startup();
         if (result) {
-            LOGGER(true, LOGG_FATAL, "srt_startup failed")
+            LOGGER(true, LOGG_FATAL, "srt_startup failed");
         }
     };
     ~SRTGlobalHandler(){
-        LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler destruct")
+        LOGGER(true, LOGG_NOTIFY, "SRTGlobalHandler destruct");
         if (intNumConnections) {
-            LOGGER(true, LOGG_WARN, "srt_cleanup when connections still active: " << intNumConnections)
+            LOGGER(true, LOGG_WARN, "srt_cleanup when connections still active: " << intNumConnections);
         }
         int result=srt_cleanup();
         if (result) {
-            LOGGER(true, LOGG_ERROR, "srt_cleanup failed")
+            LOGGER(true, LOGG_ERROR, "srt_cleanup failed");
         }
     };
 

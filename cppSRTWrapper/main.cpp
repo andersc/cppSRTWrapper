@@ -17,6 +17,9 @@ SRTNet mySRTNetServer;
 SRTNet mySRTNetClient1;
 SRTNet mySRTNetClient2;
 
+std::atomic_bool closeConnection1;
+std::atomic_bool runOnce;
+
 //**********************************
 //Server part
 //**********************************
@@ -51,10 +54,7 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &ms
         }
     }
 
-    std::cout << "Got ->" << content->size() << " " << ctx->test << std::endl;
-
-
-
+    //std::cout << "Got ->" << content->size() << " " << ctx->test << std::endl;
 
     return true;
 };
@@ -64,25 +64,28 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &ms
 //**********************************
 
 //Server sent back data callback.
-bool handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET serverHandle){
+void handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET serverHandle){
     int packetSize=content->size();
     if (ctx->test == 1) {
         std::cout << "Got client1 data ->" << packetSize << std::endl;
         ctx->counter++;
         if (ctx->counter == 1) { //kill this connection after 1 packet from server
-            std::cout << "Stop client 1" << std::endl;
-            mySRTNetClient1.stopClient();
+            closeConnection1 = true;
         }
-        return true;
+        return;
     }
     if (ctx->test == 2) {
         std::cout << "Got client2 data ->" << packetSize << std::endl;
-        return true;
+        return;
     }
-    return true;
+    return;
 };
 
 int main(int argc, const char * argv[]) {
+
+
+    closeConnection1 = false;
+    runOnce = true;
 
     std::cout << "SRT wrapper start." << std::endl;
 
@@ -139,6 +142,11 @@ int main(int argc, const char * argv[]) {
             stillSendClient1Data = mySRTNetClient1.sendData(buffer1.data(), buffer1.size(), &thisMSGCTRL1);
         }
 
+        if (closeConnection1 && runOnce) {
+            runOnce = false;
+            mySRTNetClient1.stop();
+        }
+
         SRT_MSGCTRL thisMSGCTRL2 = srt_msgctrl_default;
         mySRTNetClient2.sendData(buffer2.data(), buffer2.size(), &thisMSGCTRL2);
 
@@ -167,10 +175,12 @@ int main(int argc, const char * argv[]) {
     //mySRTNetServer.getStatistics(&currentServerStats,SRTNetClearStats::yes,SRTNetInstant::no);
 
     std::cout << "SRT garbagecollect" << std::endl;
-    mySRTNetServer.stopServer();
-    sleep(1);
-    mySRTNetClient1.stopClient();
-    mySRTNetClient2.stopClient();
+    mySRTNetServer.stop();
+    sleep(2);
+    std::cout << "stopClient 1" << std::endl;
+    mySRTNetClient1.stop();
+    std::cout << "stopClient 2" << std::endl;
+    mySRTNetClient2.stop();
 
 
     std::cout << "SRT wrapper did end." << std::endl;
