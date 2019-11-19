@@ -13,8 +13,7 @@
 #include <cstdlib>
 #include <map>
 #include <mutex>
-
-#include "SRTGlobalHandler.h"
+#include "../srt/srtcore/srt.h"
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 
@@ -80,7 +79,6 @@ private:
     void serverEventHandler();
     void clientWorker();
     void closeAllClientSockets();
-    SRTGlobalHandler& pSRTHandler = SRTGlobalHandler::GetInstance();
     SRTSOCKET context = 0;
     int poll_id = 0;
     std::mutex netMtx;

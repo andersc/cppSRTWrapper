@@ -3,6 +3,7 @@
 //
 
 #include "SRTNet.h"
+#include "SRTNetInternal.h"
 
 SRTNet::SRTNet() {
     serverActive = false;
@@ -22,12 +23,9 @@ void SRTNet::closeAllClientSockets() {
     int result = SRT_ERROR;
     for (auto& x: clientList) {
         SRTSOCKET g = x.first;
-        pSRTHandler.intNumConnections--;
         result = srt_close(g);
         if (result == SRT_ERROR) {
             LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
-        } else {
-            pSRTHandler.intNumConnections--;
         }
     }
     clientList.clear();
@@ -103,7 +101,6 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
     }
     serverActive = true;
     currentMode = Mode::server;
-    pSRTHandler.intNumConnections++;
     std::thread(std::bind(&SRTNet::waitForSRTClient, this)).detach();
     return true;
 }
@@ -167,7 +164,6 @@ void SRTNet::waitForSRTClient() {
 
         if (ctx) {
             const int events = SRT_EPOLL_IN | SRT_EPOLL_ERR;
-            pSRTHandler.intNumConnections++;
             clientListMtx.lock();
             clientList.emplace(newSocketCandidate,ctx);
             clientListMtx.unlock();
@@ -245,7 +241,6 @@ bool SRTNet::startClient(std::string host, uint16_t port, int reorder, int32_t l
 
     currentMode = Mode::client;
     clientActive = true;
-    pSRTHandler.intNumConnections++;
     std::thread(std::bind(&SRTNet::clientWorker, this)).detach();
     return true;
 }
@@ -305,8 +300,6 @@ bool SRTNet::stop() {
             if (result == SRT_ERROR) {
                 LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
                 return false;
-            } else {
-                pSRTHandler.intNumConnections--;
             }
         }
         closeAllClientSockets();
@@ -328,8 +321,6 @@ bool SRTNet::stop() {
             if (result == SRT_ERROR) {
                 LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
                 return false;
-            } else {
-                pSRTHandler.intNumConnections--;
             }
         }
 

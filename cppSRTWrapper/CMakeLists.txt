@@ -20,10 +20,16 @@ SET(CMAKE_CXX_FLAGS -pthread)
 include_directories(${MY_SOURCE_DIR} ../srt/)
 link_directories(../srt/)
 
+add_library(srtnet STATIC SRTNet.cpp)
+target_link_libraries(srtnet
+        libsrt.a
+        ${OPENSSL_LIBRARIES}
+        )
+
 add_executable(cppSRTWrapper
         main.cpp
         SRTNet.cpp
-        SRTGlobalHandler.cpp)
+        )
 
 target_link_libraries(cppSRTWrapper
         libsrt.a
