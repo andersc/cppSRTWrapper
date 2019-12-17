@@ -86,6 +86,15 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
         return false;
     }
 
+
+    int packetSize=1456;
+    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &packetSize, sizeof packetSize);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
+        return false;
+    }
+
+
     result = srt_bind(context, (struct sockaddr *) &sa, sizeof sa);
     if (result == SRT_ERROR) {
         LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
@@ -228,6 +237,13 @@ bool SRTNet::startClient(std::string host, uint16_t port, int reorder, int32_t l
     result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
     if (result == SRT_ERROR) {
         LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
+        return false;
+    }
+
+    int packetSize=1456;
+    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &packetSize, sizeof packetSize);
+    if (result == SRT_ERROR) {
+        LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
         return false;
     }
 
