@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <map>
 #include <mutex>
+#include <any>
 #include "../srt/srtcore/srt.h"
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
@@ -20,12 +21,7 @@
 //Fill this class with all information you need for the duration of the connection both client and server
 class NetworkConnection {
 public:
-    NetworkConnection() {
-        isKnown = false;
-    };
-    int test = 0;
-    int counter = 0;
-    std::atomic_bool isKnown;
+    std::any object;
 };
 
 namespace  SRTNetClearStats {
@@ -54,14 +50,14 @@ public:
     SRTNet();
     virtual ~SRTNet();
 
-    bool startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead);
-    bool startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> ctx);
+    bool startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu);
+    bool startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> &ctx, int mtu);
     bool stop();
     bool sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem = 0);
     bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous, SRTSOCKET targetSystem = 0);
 
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr_in* sin)> clientConnected = nullptr;
-    std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET)> recievedData = nullptr;
+    std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET)> recievedData = nullptr;
     std::atomic<bool> serverActive;
     std::atomic<bool> clientActive;
     std::atomic<bool> serverListenThreadActive;

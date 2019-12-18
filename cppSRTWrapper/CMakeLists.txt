@@ -15,7 +15,7 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_FLAGS -pthread)
 include_directories(${MY_SOURCE_DIR} ../srt/)
 link_directories(../srt/)

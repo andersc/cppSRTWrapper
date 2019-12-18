@@ -32,7 +32,7 @@ void SRTNet::closeAllClientSockets() {
     clientListMtx.unlock();
 }
 
-bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead) {
+bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu) {
     std::lock_guard<std::mutex> lock(netMtx);
     int result = 0;
     struct sockaddr_in sa;
@@ -87,8 +87,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
     }
 
 
-    int packetSize=1456;
-    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &packetSize, sizeof packetSize);
+    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &mtu, sizeof mtu);
     if (result == SRT_ERROR) {
         LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
         return false;
@@ -188,7 +187,7 @@ void SRTNet::waitForSRTClient() {
     serverListenThreadActive = false;
 }
 
-bool SRTNet::startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> ctx) {
+bool SRTNet::startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> &ctx, int mtu) {
     std::lock_guard<std::mutex> lock(netMtx);
     if (currentMode != Mode::unknown) {
         LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
@@ -240,8 +239,7 @@ bool SRTNet::startClient(std::string host, uint16_t port, int reorder, int32_t l
         return false;
     }
 
-    int packetSize=1456;
-    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &packetSize, sizeof packetSize);
+    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &mtu, sizeof mtu);
     if (result == SRT_ERROR) {
         LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
         return false;
