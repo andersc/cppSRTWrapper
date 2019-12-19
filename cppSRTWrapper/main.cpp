@@ -85,6 +85,7 @@ void handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCT
 
     //Try catch?
     auto v = std::any_cast<std::shared_ptr<MyClass>&>(ctx -> object);
+
     int packetSize=content->size();
     if (v->test == 1) {
         std::cout << "Got client1 data ->" << packetSize << std::endl;
