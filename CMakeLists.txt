@@ -11,7 +11,7 @@ ExternalProject_Add(project_srt
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure
-        BUILD_COMMAND make
+        BUILD_COMMAND make srt_static
         GIT_PROGRESS 1
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
