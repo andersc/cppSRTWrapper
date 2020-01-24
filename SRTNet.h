@@ -10,11 +10,12 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <utility>
 #include <cstdlib>
 #include <map>
 #include <mutex>
 #include <any>
-#include "../srt/srtcore/srt.h"
+#include "srt/srtcore/srt.h"
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 
@@ -79,7 +80,7 @@ private:
     int poll_id = 0;
     std::mutex netMtx;
     std::mutex clientListMtx;
-    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList;
+    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList = {};
     Mode currentMode = Mode::unknown;
     std::shared_ptr<NetworkConnection> clientContext = nullptr;
 };

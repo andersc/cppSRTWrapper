@@ -33,6 +33,7 @@ void SRTNet::closeAllClientSockets() {
 }
 
 bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu) {
+
     std::lock_guard<std::mutex> lock(netMtx);
     int result = 0;
     struct sockaddr_in sa;
@@ -120,6 +121,7 @@ void SRTNet::serverEventHandler() {
         if (ret == MAX_WORKERS + 1) {
             ret--;
         }
+
         if (ret > 0) {
             for (int i = 0; i < ret; i++) {
                 uint8_t msg[2048];
@@ -134,8 +136,10 @@ void SRTNet::serverEventHandler() {
                     srt_close(thisSocket);
                     clientListMtx.unlock();
                 } else if (result > 0 && recievedData) {
-                    auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
-                    recievedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
+                  auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
+                  recievedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
+                  int j=77;
+
                 }
             }
         } else if (ret == -1) {
@@ -173,7 +177,7 @@ void SRTNet::waitForSRTClient() {
         if (ctx) {
             const int events = SRT_EPOLL_IN | SRT_EPOLL_ERR;
             clientListMtx.lock();
-            clientList.emplace(newSocketCandidate,ctx);
+            clientList[newSocketCandidate] = ctx;
             clientListMtx.unlock();
             result = srt_epoll_add_usock(poll_id, newSocketCandidate, &events);
             if (result == SRT_ERROR) {

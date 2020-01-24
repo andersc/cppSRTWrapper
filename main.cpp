@@ -71,7 +71,7 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &ms
         }
     }
 
-    //std::cout << "Got ->" << content->size() << " " << ctx->test << std::endl;
+   // std::cout << "Got ->" << content->size() << " " << std::endl;
 
     return true;
 };
@@ -81,7 +81,9 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &ms
 //**********************************
 
 //Server sent back data callback.
-void handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> ctx, SRTSOCKET serverHandle){
+void handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET serverHandle){
+
+  std::cout << "Got data ->" << content->size() << std::endl;
 
     //Try catch?
     auto v = std::any_cast<std::shared_ptr<MyClass>&>(ctx -> object);
