@@ -5,12 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 include(ExternalProject)
 ExternalProject_Add(project_srt
         GIT_REPOSITORY https://github.com/Haivision/srt.git
-        #https://gitlab.kitware.com/cmake/cmake/issues/16419
         UPDATE_COMMAND ""
-        #GIT_TAG ecc0aa9
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure
+        GIT_SUBMODULES ""
         BUILD_COMMAND make srt_static
         GIT_PROGRESS 1
         STEP_TARGETS build
