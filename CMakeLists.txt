@@ -17,7 +17,6 @@ ExternalProject_Add(project_srt
         INSTALL_COMMAND ""
         )
 
-
 add_library(srt STATIC IMPORTED)
 set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/libsrt.a)
 
