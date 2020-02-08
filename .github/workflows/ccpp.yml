@@ -8,31 +8,13 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
+    - name: install
+      run: sudo apt -y install tclsh pkg-config libssl-dev
     - name: cmake
       run: cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
       run: make
       
-  buildmac:
-    name: build_macos
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: cmake
-      run: cmake -DCMAKE_BUILD_TYPE=Release .
-    - name: make
-      run: make
-
-      
-  buildwin:
-    name: build_windows
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: cmake
-      run: cmake --config Release .
-    - name: build
-      run: cmake --build .
 
 
 
