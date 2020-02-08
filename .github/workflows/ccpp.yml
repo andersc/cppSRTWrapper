@@ -3,15 +3,37 @@ name: C/C++ CI
 on: [push]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-latest
-    
+  buildubuntu:
+    name: build_ubuntu_18.04
+    runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v1
-    - name: updatesubmodule
-      run: git submodule update --init --recursive
-    - name: buildall
-      run: ./buildALL.sh
-      shell: bash
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: cmake -DCMAKE_BUILD_TYPE=Release .
+    - name: make
+      run: make
+      
+  buildmac:
+    name: build_macos
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: cmake -DCMAKE_BUILD_TYPE=Release .
+    - name: make
+      run: make
+
+      
+  buildwin:
+    name: build_windows
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: cmake --config Release .
+    - name: build
+      run: cmake --build .
+
+
+
 

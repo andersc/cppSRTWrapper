@@ -179,7 +179,7 @@ int main(int argc, const char * argv[]) {
         SRT_MSGCTRL thisMSGCTRL2 = srt_msgctrl_default;
         mySRTNetClient2.sendData(buffer2.data(), buffer2.size(), &thisMSGCTRL2);
 
-        usleep(10000); //wait 10 milli
+        std::this_thread::sleep_for(std::chrono::microseconds(10000));
         if (times++ == 300) {
             break;
         }

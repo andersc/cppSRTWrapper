@@ -54,7 +54,6 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
         return false;
     }
 
-
     sa.sin_family = AF_INET;
     sa.sin_port = htons(port);
     if (inet_pton(AF_INET, ip.c_str(), &sa.sin_addr) != 1) {
@@ -323,7 +322,7 @@ bool SRTNet::stop() {
         closeAllClientSockets();
         int threadRunning = 1000;
         while (serverListenThreadActive) {
-            usleep(1000);
+          std::this_thread::sleep_for(std::chrono::microseconds(1000));
             if (!--threadRunning) {
                 LOGGER(true, LOGG_FATAL, "SRTNet server thread is still running after 1 second. Crash and burn baby!!");
                 break;
@@ -344,7 +343,7 @@ bool SRTNet::stop() {
 
         int threadRunning = 1000; //Timeout after 1000ms
         while (clientThreadActive) {
-            usleep(1000);
+          std::this_thread::sleep_for(std::chrono::microseconds(1000));
             if (!--threadRunning) {
                 LOGGER(true, LOGG_FATAL, "SRTNet client thread is still running after 1 second. Crash and burn baby!!");
                 break;
