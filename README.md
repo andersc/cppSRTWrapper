@@ -2,6 +2,10 @@
 
 *Simple C++ wrapper of the [SRT](https://github.com/Haivision/srt) protocol*.
 
+Current build status:
+
+![Ubuntu 18.04](https://github.com/andersc/cppSRTWrapper/workflows/Ubuntu%2018.04/badge.svg)
+
 ## Building
 
 Requires cmake version >= **3.10** and **C++17**
