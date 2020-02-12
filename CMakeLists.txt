@@ -3,14 +3,17 @@ project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(ExternalProject)
 ExternalProject_Add(project_srt
+
         GIT_REPOSITORY https://github.com/Haivision/srt.git
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
-        CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure
+        CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure --CMAKE_VERBOSE_MAKEFILE:BOOL=ON
+        #CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
         GIT_SUBMODULES ""
         BUILD_COMMAND make srt_static
         GIT_PROGRESS 1
