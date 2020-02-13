@@ -4,7 +4,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 #If no build type is set then force Release
 IF( NOT CMAKE_BUILD_TYPE )
-    SET( CMAKE_BUILD_TYPE Release ... FORCE )
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+            "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+            FORCE)
 ENDIF()
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
@@ -15,8 +17,6 @@ ExternalProject_Add(project_srt
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
-        CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure
-        GIT_SUBMODULES ""
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
         GIT_PROGRESS 1
         STEP_TARGETS build
