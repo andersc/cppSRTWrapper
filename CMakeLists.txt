@@ -2,18 +2,22 @@ cmake_minimum_required(VERSION 3.10)
 project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
 
+#If no build type is set then force Release
+IF( NOT CMAKE_BUILD_TYPE )
+    SET( CMAKE_BUILD_TYPE Release ... FORCE )
+ENDIF()
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 
 include(ExternalProject)
 ExternalProject_Add(project_srt
-
         GIT_REPOSITORY https://github.com/Haivision/srt.git
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure
         GIT_SUBMODULES ""
-        BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config Release --target srt_static
+        BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
         GIT_PROGRESS 1
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE

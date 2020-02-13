@@ -104,7 +104,7 @@ void handleDataClient(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCT
     return;
 };
 
-int main(int argc, const char * argv[]) {
+int 1(int argc, const char * argv[]) {
 
 
     closeConnection1 = false;
