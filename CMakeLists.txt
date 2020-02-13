@@ -3,7 +3,6 @@ project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(ExternalProject)
 ExternalProject_Add(project_srt
@@ -12,10 +11,9 @@ ExternalProject_Add(project_srt
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
-        CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure --CMAKE_VERBOSE_MAKEFILE:BOOL=ON
-        #CMAKE_ARGS "${CMAKE_ARGS};-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+        CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure
         GIT_SUBMODULES ""
-        BUILD_COMMAND make srt_static
+        BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config Release --target srt_static
         GIT_PROGRESS 1
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
@@ -24,6 +22,7 @@ ExternalProject_Add(project_srt
 
 add_library(srt STATIC IMPORTED)
 set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/libsrt.a)
+add_dependencies(srt project_srt)
 
 find_package (Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -31,9 +30,7 @@ find_package(OpenSSL REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/)
 
 add_library(srtnet STATIC SRTNet.cpp)
-add_dependencies(srtnet project_srt)
 target_link_libraries(srtnet srt ${OPENSSL_LIBRARIES} Threads::Threads)
 
 add_executable(cppSRTWrapper main.cpp SRTNet.cpp)
-add_dependencies(cppSRTWrapper srtnet)
 target_link_libraries(cppSRTWrapper srtnet)
