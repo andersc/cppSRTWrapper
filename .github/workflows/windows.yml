@@ -8,6 +8,8 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
+    - name: install OpenSSL
+      run: choco install openssl > null
     - name: cmake
       run: cmake --config Release .
     - name: build
