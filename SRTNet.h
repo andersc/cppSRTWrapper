@@ -16,6 +16,9 @@
 #include <mutex>
 #include <any>
 #include "srt/srtcore/srt.h"
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 
@@ -57,7 +60,7 @@ public:
     bool sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem = 0);
     bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous, SRTSOCKET targetSystem = 0);
 
-    std::function<std::shared_ptr<NetworkConnection>(struct sockaddr_in* sin)> clientConnected = nullptr;
+    std::function<std::shared_ptr<NetworkConnection>(struct sockaddr &sin)> clientConnected = nullptr;
     std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET)> recievedData = nullptr;
     std::atomic<bool> serverActive;
     std::atomic<bool> clientActive;
@@ -76,6 +79,8 @@ private:
     void serverEventHandler();
     void clientWorker();
     void closeAllClientSockets();
+    bool isIPv4(const std::string& str);
+    bool isIPv6(const std::string& str);
     SRTSOCKET context = 0;
     int poll_id = 0;
     std::mutex netMtx;
