@@ -16,9 +16,7 @@
 #include <mutex>
 #include <any>
 #include "srt/srtcore/srt.h"
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 

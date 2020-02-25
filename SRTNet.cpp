@@ -77,7 +77,6 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
   }
 
   if (ipType == AF_INET) {
-    saV4.sin_len = sizeof(sockaddr_in);
     saV4.sin_family = AF_INET;
     saV4.sin_port = htons(port);
     if (inet_pton(AF_INET, ip.c_str(), &saV4.sin_addr) != 1) {
@@ -88,7 +87,6 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
   }
 
   if (ipType == AF_INET6) {
-    saV6.sin6_len = sizeof(sockaddr_in6);
     saV6.sin6_family = AF_INET6;
     saV6.sin6_port = htons(port);
     if (inet_pton(AF_INET6, ip.c_str(), &saV6.sin6_addr) != 1) {
