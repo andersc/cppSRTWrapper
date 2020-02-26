@@ -58,5 +58,12 @@ if [[ ! -f libsrt.a ]]; then
 
     cp ./build/ios_arm64/version.h srt/srtcore/.
 
+    awk '
+/^struct CBytePerfMon/ { g = 1 }
+p == 1 { print }
+g == 1 { print "struct CBytePerfMonExpose"; p = 1; g = 0 }
+/};/ { p = 0 }
+' srt/srtcore/srt.h > srt_status.h
+
     lipo -output libsrt.a -create ./build/ios_x86_64/libsrt.a ./build/ios_arm64/libsrt.a
 fi
