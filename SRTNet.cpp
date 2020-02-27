@@ -289,17 +289,18 @@ bool SRTNet::startClient(std::string host,
   }
 
   //get all addresses for connection
-  struct addrinfo hints;
+  struct addrinfo hints = {0};
   struct addrinfo *svr;
   struct addrinfo *p;
   hints.ai_socktype = SOCK_DGRAM;
   hints.ai_protocol = IPPROTO_UDP;
+  hints.ai_flags = AI_DEFAULT;
   hints.ai_family   = AF_UNSPEC;
   std::stringstream portAsString;
   portAsString << port;
   result = getaddrinfo(host.c_str(),portAsString.str().c_str(),&hints, &svr);
   if (result) {
-    LOGGER(true, LOGG_FATAL, "Failed getting the IP target for > " << host << ":" << unsigned(port) << srt_getlasterror_str());
+    LOGGER(true, LOGG_FATAL, "Failed getting the IP target for > " << host << ":" << unsigned(port) << " Errno: " << unsigned(result));
     return false;
   }
 
