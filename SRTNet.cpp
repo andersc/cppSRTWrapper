@@ -294,7 +294,6 @@ bool SRTNet::startClient(std::string host,
   struct addrinfo *p;
   hints.ai_socktype = SOCK_DGRAM;
   hints.ai_protocol = IPPROTO_UDP;
-  hints.ai_flags = AI_DEFAULT;
   hints.ai_family   = AF_UNSPEC;
   std::stringstream portAsString;
   portAsString << port;
