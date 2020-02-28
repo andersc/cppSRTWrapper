@@ -58,8 +58,8 @@ public:
     bool sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem = 0);
     bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous, SRTSOCKET targetSystem = 0);
 
-    std::function<std::shared_ptr<NetworkConnection>(struct sockaddr &sin)> clientConnected = nullptr;
-    std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET)> recievedData = nullptr;
+    std::function<std::shared_ptr<NetworkConnection>(struct sockaddr &sin, SRTSOCKET newSocket)> clientConnected = nullptr;
+    std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET socket)> recievedData = nullptr;
     std::atomic<bool> serverActive;
     std::atomic<bool> clientActive;
     std::atomic<bool> serverListenThreadActive;

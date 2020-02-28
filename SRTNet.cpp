@@ -180,8 +180,6 @@ void SRTNet::serverEventHandler() {
         } else if (result > 0 && recievedData) {
           auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
           recievedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
-          int j = 77;
-
         }
       }
     } else if (ret == -1) {
@@ -212,7 +210,7 @@ void SRTNet::waitForSRTClient() {
       continue;
     }
     LOGGER(true, LOGG_NOTIFY, "Client connected: " << newSocketCandidate);
-    auto ctx = clientConnected(*(struct sockaddr *) &their_addr);
+    auto ctx = clientConnected(*(struct sockaddr *) &their_addr, newSocketCandidate);
 
     if (ctx) {
       const int events = SRT_EPOLL_IN | SRT_EPOLL_ERR;

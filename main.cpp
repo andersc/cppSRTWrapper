@@ -37,7 +37,7 @@ public:
 //**********************************
 
 //Return a connection object. (Return nullptr if you don't want to connect to that client)
-std::shared_ptr<NetworkConnection> validateConnection(struct sockaddr &sin) {
+std::shared_ptr<NetworkConnection> validateConnection(struct sockaddr &sin, SRTSOCKET newSocket) {
 
   char addrIPv6[INET6_ADDRSTRLEN];
 
@@ -138,7 +138,7 @@ int main(int argc, const char * argv[]) {
     std::cout << "SRT wrapper start." << std::endl;
 
     //Register the server callbacks
-    mySRTNetServer.clientConnected=std::bind(&validateConnection, std::placeholders::_1);
+    mySRTNetServer.clientConnected=std::bind(&validateConnection, std::placeholders::_1, std::placeholders::_2);
     mySRTNetServer.recievedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
     /*Start the server
      * ip: bind to this ip (can be IPv4 or IPv6)
