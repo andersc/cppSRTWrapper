@@ -156,6 +156,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
   return true;
 }
 
+
 void SRTNet::serverEventHandler() {
   SRT_EPOLL_EVENT ready[MAX_WORKERS];
   while (serverActive) {

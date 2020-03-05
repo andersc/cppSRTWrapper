@@ -43,6 +43,7 @@ namespace  SRTNetInstant {
 
 class SRTNet {
 public:
+
     enum Mode {
         unknown,
         server,
@@ -60,11 +61,15 @@ public:
 
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr &sin, SRTSOCKET newSocket)> clientConnected = nullptr;
     std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET socket)> recievedData = nullptr;
+
     std::atomic<bool> serverActive;
     std::atomic<bool> clientActive;
     std::atomic<bool> serverListenThreadActive;
     std::atomic<bool> serverPollThreadActive;
     std::atomic<bool> clientThreadActive;
+
+    std::mutex clientListMtx; //You must claim the lock before accessing the clientList. Release when done
+    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList = {};
 
     // delete copy and move constructors and assign operators
     SRTNet(SRTNet const&) = delete;             // Copy construct
@@ -82,10 +87,9 @@ private:
     SRTSOCKET context = 0;
     int poll_id = 0;
     std::mutex netMtx;
-    std::mutex clientListMtx;
-    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList = {};
     Mode currentMode = Mode::unknown;
     std::shared_ptr<NetworkConnection> clientContext = nullptr;
 };
+
 
 #endif //CPPSRTWRAPPER_SRTNET_H

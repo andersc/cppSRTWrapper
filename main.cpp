@@ -177,7 +177,7 @@ int main(int argc, const char * argv[]) {
     }
 
     sleep(2);
-
+    
     //Send 300 packets with 10 milliseconds spacing. Packets are 1000 bytes long
     int times = 0;
 
