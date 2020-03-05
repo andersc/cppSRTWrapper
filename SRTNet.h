@@ -44,6 +44,21 @@ namespace  SRTNetInstant {
 class SRTNet {
 public:
 
+  class SRTNetActiveClients {
+  public:
+    SRTNetActiveClients(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> *list, std::mutex *mtx) {
+      mClientListMtx=mtx;
+      mClientListMtx->lock();
+      mClientList=list;
+    }
+    virtual ~SRTNetActiveClients() {
+      mClientListMtx->unlock();
+    }
+    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> *mClientList;
+  private:
+    std::mutex *mClientListMtx;
+  };
+
     enum Mode {
         unknown,
         server,
@@ -58,6 +73,7 @@ public:
     bool stop();
     bool sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem = 0);
     bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous, SRTSOCKET targetSystem = 0);
+    std::unique_ptr<SRTNetActiveClients> getActiveClients();
 
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr &sin, SRTSOCKET newSocket)> clientConnected = nullptr;
     std::function<void(std::unique_ptr <std::vector<uint8_t>> &data, SRT_MSGCTRL &msgCtrl, std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET socket)> recievedData = nullptr;
@@ -68,14 +84,15 @@ public:
     std::atomic<bool> serverPollThreadActive;
     std::atomic<bool> clientThreadActive;
 
-    std::mutex clientListMtx; //You must claim the lock before accessing the clientList. Release when done
-    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList = {};
+
+
 
     // delete copy and move constructors and assign operators
     SRTNet(SRTNet const&) = delete;             // Copy construct
     SRTNet(SRTNet&&) = delete;                  // Move construct
     SRTNet& operator=(SRTNet const&) = delete;  // Copy assign
     SRTNet& operator=(SRTNet &&) = delete;      // Move assign
+
 
 private:
     void waitForSRTClient();
@@ -88,7 +105,10 @@ private:
     int poll_id = 0;
     std::mutex netMtx;
     Mode currentMode = Mode::unknown;
+    std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList = {};
+    std::mutex clientListMtx;
     std::shared_ptr<NetworkConnection> clientContext = nullptr;
+
 };
 
 

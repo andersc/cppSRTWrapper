@@ -230,6 +230,10 @@ void SRTNet::waitForSRTClient() {
   serverListenThreadActive = false;
 }
 
+std::unique_ptr<SRTNet::SRTNetActiveClients> SRTNet::getActiveClients() {
+  return std::make_unique<SRTNet::SRTNetActiveClients>(&clientList,&clientListMtx);
+}
+
 //Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com
 //There is no IP-Version preference if a name is given. the first IP-version found will be used
 bool SRTNet::startClient(std::string host,
