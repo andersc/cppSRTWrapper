@@ -230,8 +230,10 @@ void SRTNet::waitForSRTClient() {
   serverListenThreadActive = false;
 }
 
-std::unique_ptr<SRTNet::SRTNetActiveClients> SRTNet::getActiveClients() {
-  return std::make_unique<SRTNet::SRTNetActiveClients>(&clientList,&clientListMtx);
+void SRTNet::getActiveClients(std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)> function) {
+  clientListMtx.lock();
+  function(clientList);
+  clientListMtx.unlock();
 }
 
 //Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com

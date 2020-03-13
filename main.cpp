@@ -178,9 +178,15 @@ int main(int argc, const char * argv[]) {
 
     sleep(2);
 
-    auto clients  = mySRTNetServer.getActiveClients();
-    std::cout << "The server got " << clients->mClientList->size() << " clients." << std::endl;
-    clients = nullptr;
+   // auto clients  = mySRTNetServer.getActiveClients();
+  //  std::cout << "The server got " << clients->mClientList->size() << " clients." << std::endl;
+  //  clients = nullptr;
+
+  mySRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &clientList)
+  {
+    std::cout << "The server got " << clientList.size() << " clients." << std::endl;
+  }
+  );
 
     //Send 300 packets with 10 milliseconds spacing. Packets are 1000 bytes long
     int times = 0;
@@ -232,9 +238,11 @@ int main(int argc, const char * argv[]) {
     SRT_TRACEBSTATS currentServerStats = {0};
     //mySRTNetServer.getStatistics(&currentServerStats,SRTNetClearStats::yes,SRTNetInstant::no);
 
-    clients  = mySRTNetServer.getActiveClients();
-    std::cout << "The server got " << clients->mClientList->size() << " clients." << std::endl;
-    clients = nullptr;
+  mySRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &clientList)
+  {
+    std::cout << "The server got " << clientList.size() << " clients." << std::endl;
+  }
+  );
 
 
     std::cout << "SRT garbagecollect" << std::endl;
@@ -245,9 +253,11 @@ int main(int argc, const char * argv[]) {
     std::cout << "stopClient 2" << std::endl;
     mySRTNetClient2.stop();
 
-    clients  = mySRTNetServer.getActiveClients();
-    std::cout << "The server got " << clients->mClientList->size() << " clients." << std::endl;
-    clients = nullptr;
+  mySRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &clientList)
+  {
+    std::cout << "The server got " << clientList.size() << " clients." << std::endl;
+  }
+  );
 
     std::cout << "SRT wrapper did end." << std::endl;
     return EXIT_SUCCESS;
