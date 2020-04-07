@@ -35,7 +35,7 @@ find_package(OpenSSL REQUIRED)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/)
 
 add_library(srtnet STATIC SRTNet.cpp)
-target_link_libraries(srtnet PUBLIC srt)
+target_link_libraries(srtnet srt ${OPENSSL_LIBRARIES} Threads::Threads)
 
 add_executable(cppSRTWrapper main.cpp)
-target_link_libraries(cppSRTWrapper srtnet ${OPENSSL_LIBRARIES} Threads::Threads)
+target_link_libraries(cppSRTWrapper srtnet)
