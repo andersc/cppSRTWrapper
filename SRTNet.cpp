@@ -11,11 +11,11 @@ SRTNet::SRTNet() {
   serverPollThreadActive = false;
   clientActive = false;
   clientThreadActive = false;
-  LOGGER(true, LOGG_NOTIFY, "SRTNet constructed");
+  SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet constructed");
 }
 
 SRTNet::~SRTNet() {
-  LOGGER(true, LOGG_NOTIFY, "SRTNet destruct");
+  SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet destruct");
 }
 
 void SRTNet::closeAllClientSockets() {
@@ -25,7 +25,7 @@ void SRTNet::closeAllClientSockets() {
     SRTSOCKET g = x.first;
     result = srt_close(g);
     if (result == SRT_ERROR) {
-      LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
+      SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
     }
   }
   clientList.clear();
@@ -53,7 +53,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
   } else if (isIPv6(ip)) {
     ipType = AF_INET6;
   } else {
-    LOGGER(true, LOGG_ERROR, " " << "Provided IP-Address not valid.");
+    SRT_LOGGER(true, LOGG_ERROR, " " << "Provided IP-Address not valid.");
   }
 
   std::lock_guard<std::mutex> lock(netMtx);
@@ -61,18 +61,18 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
 
   int32_t yes = 1;
   if (currentMode != Mode::unknown) {
-    LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
+    SRT_LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
     return false;
   }
 
   if (!clientConnected) {
-    LOGGER(true, LOGG_FATAL, "waitForSRTClient needs clientConnected callback method terminating server!");
+    SRT_LOGGER(true, LOGG_FATAL, "waitForSRTClient needs clientConnected callback method terminating server!");
     return false;
   }
 
   context = srt_create_socket();
   if (context == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
     return false;
   }
 
@@ -80,7 +80,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
     saV4.sin_family = AF_INET;
     saV4.sin_port = htons(port);
     if (inet_pton(AF_INET, ip.c_str(), &saV4.sin_addr) != 1) {
-      LOGGER(true, LOGG_FATAL, "inet_pton failed ");
+      SRT_LOGGER(true, LOGG_FATAL, "inet_pton failed ");
       srt_close(context);
       return false;
     }
@@ -90,7 +90,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
     saV6.sin6_family = AF_INET6;
     saV6.sin6_port = htons(port);
     if (inet_pton(AF_INET6, ip.c_str(), &saV6.sin6_addr) != 1) {
-      LOGGER(true, LOGG_FATAL, "inet_pton failed ");
+      SRT_LOGGER(true, LOGG_FATAL, "inet_pton failed ");
       srt_close(context);
       return false;
     }
@@ -98,38 +98,38 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
 
   result = srt_setsockflag(context, SRTO_RCVSYN, &yes, sizeof yes);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_RCVSYN: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_RCVSYN: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &mtu, sizeof mtu);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
     return false;
   }
 
   if (ipType == AF_INET) {
     result = srt_bind(context, (struct sockaddr *) &saV4, sizeof saV4);
     if (result == SRT_ERROR) {
-      LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+      SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
       srt_close(context);
       return false;
     }
@@ -138,7 +138,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
   if (ipType == AF_INET6) {
     result = srt_bind(context, (struct sockaddr *) &saV6, sizeof saV6);
     if (result == SRT_ERROR) {
-      LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+      SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
       srt_close(context);
       return false;
     }
@@ -146,7 +146,7 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
 
   result = srt_listen(context, 2);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_listen: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_listen: " << srt_getlasterror_str());
     srt_close(context);
     return false;
   }
@@ -172,7 +172,7 @@ void SRTNet::serverEventHandler() {
         SRTSOCKET thisSocket = ready[i].fd;
         int result = srt_recvmsg2(thisSocket, (char *) msg, sizeof msg, &thisMSGCTRL);
         if (result == SRT_ERROR) {
-          LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << result << " " << srt_getlasterror_str());
+          SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << result << " " << srt_getlasterror_str());
           clientListMtx.lock();
           clientList.erase(clientList.find(thisSocket)->first);
           srt_epoll_remove_usock(poll_id, thisSocket);
@@ -184,11 +184,11 @@ void SRTNet::serverEventHandler() {
         }
       }
     } else if (ret == -1) {
-      LOGGER(true, LOGG_ERROR, "epoll error: " << srt_getlasterror_str());
+      SRT_LOGGER(true, LOGG_ERROR, "epoll error: " << srt_getlasterror_str());
     }
 
   }
-  LOGGER(true, LOGG_NOTIFY, "serverEventHandler exit");
+  SRT_LOGGER(true, LOGG_NOTIFY, "serverEventHandler exit");
   srt_epoll_release(poll_id);
 }
 
@@ -204,13 +204,13 @@ void SRTNet::waitForSRTClient() {
 
   while (serverActive) {
     struct sockaddr_storage their_addr;
-    LOGGER(true, LOGG_NOTIFY, "SRT Server wait for client");
+    SRT_LOGGER(true, LOGG_NOTIFY, "SRT Server wait for client");
     int addr_size = sizeof their_addr;
     SRTSOCKET newSocketCandidate = srt_accept(context, (struct sockaddr *) &their_addr, &addr_size);
     if (newSocketCandidate == -1) {
       continue;
     }
-    LOGGER(true, LOGG_NOTIFY, "Client connected: " << newSocketCandidate);
+    SRT_LOGGER(true, LOGG_NOTIFY, "Client connected: " << newSocketCandidate);
     auto ctx = clientConnected(*(struct sockaddr *) &their_addr, newSocketCandidate);
 
     if (ctx) {
@@ -220,7 +220,7 @@ void SRTNet::waitForSRTClient() {
       clientListMtx.unlock();
       result = srt_epoll_add_usock(poll_id, newSocketCandidate, &events);
       if (result == SRT_ERROR) {
-        LOGGER(true, LOGG_FATAL, "srt_epoll_add_usock error: " << srt_getlasterror_str());
+        SRT_LOGGER(true, LOGG_FATAL, "srt_epoll_add_usock error: " << srt_getlasterror_str());
       }
     } else {
       close(newSocketCandidate);
@@ -247,7 +247,7 @@ bool SRTNet::startClient(std::string host,
                          int mtu) {
   std::lock_guard<std::mutex> lock(netMtx);
   if (currentMode != Mode::unknown) {
-    LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
+    SRT_LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
     return false;
   }
 
@@ -255,41 +255,41 @@ bool SRTNet::startClient(std::string host,
 
   int result = 0;
   int32_t yes = 1;
-  LOGGER(true, LOGG_NOTIFY, "SRT client startup");
+  SRT_LOGGER(true, LOGG_NOTIFY, "SRT client startup");
 
   context = srt_create_socket();
   if (context == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_SENDER, &yes, sizeof yes);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_SENDER: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_SENDER: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
     return false;
   }
 
   result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &mtu, sizeof mtu);
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
     return false;
   }
 
@@ -304,22 +304,22 @@ bool SRTNet::startClient(std::string host,
   portAsString << port;
   result = getaddrinfo(host.c_str(),portAsString.str().c_str(),&hints, &svr);
   if (result) {
-    LOGGER(true, LOGG_FATAL, "Failed getting the IP target for > " << host << ":" << unsigned(port) << " Errno: " << unsigned(result));
+    SRT_LOGGER(true, LOGG_FATAL, "Failed getting the IP target for > " << host << ":" << unsigned(port) << " Errno: " << unsigned(result));
     return false;
   }
 
-  LOGGER(true, LOGG_NOTIFY, "SRT connect");
+  SRT_LOGGER(true, LOGG_NOTIFY, "SRT connect");
   for (p = svr; p; p = p->ai_next) {
     result = srt_connect(context, (struct sockaddr *) p->ai_addr,  p->ai_addrlen);
     if (result != SRT_ERROR) {
-      LOGGER(true, LOGG_NOTIFY, "Connected to SRT Server " << std::endl)
+      SRT_LOGGER(true, LOGG_NOTIFY, "Connected to SRT Server " << std::endl)
       break;
     }
   }
   if (result == SRT_ERROR) {
     srt_close(context);
     freeaddrinfo(svr);
-    LOGGER(true, LOGG_FATAL, "srt_connect failed " << std::endl)
+    SRT_LOGGER(true, LOGG_FATAL, "srt_connect failed " << std::endl)
     return false;
   }
   freeaddrinfo(svr);
@@ -340,7 +340,7 @@ void SRTNet::clientWorker() {
     result = srt_recvmsg2(context, (char *) msg, sizeof msg, &thisMSGCTRL);
     if (result == SRT_ERROR) {
       if (clientActive) {
-        LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << srt_getlasterror_str());
+        SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << srt_getlasterror_str());
       }
       break;
     } else if (result > 0 && recievedData) {
@@ -360,16 +360,16 @@ bool SRTNet::sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET
   } else if (currentMode == Mode::server && targetSystem && serverActive) {
     result = srt_sendmsg2(targetSystem, (const char *) data, len, msgCtrl);
   } else {
-    LOGGER(true, LOGG_ERROR, "Can't send data, the client is not active.");
+    SRT_LOGGER(true, LOGG_ERROR, "Can't send data, the client is not active.");
     return false;
   }
 
   if (result == SRT_ERROR) {
-    LOGGER(true, LOGG_ERROR, "srt_sendmsg2 failed: " << srt_getlasterror_str());
+    SRT_LOGGER(true, LOGG_ERROR, "srt_sendmsg2 failed: " << srt_getlasterror_str());
     return false;
   }
   if (result != len) {
-    LOGGER(true, LOGG_ERROR, "Failed sending all data");
+    SRT_LOGGER(true, LOGG_ERROR, "Failed sending all data");
     return false;
   }
   return true;
@@ -383,7 +383,7 @@ bool SRTNet::stop() {
     if (context) {
       result = srt_close(context);
       if (result == SRT_ERROR) {
-        LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
+        SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
         return false;
       }
     }
@@ -392,11 +392,11 @@ bool SRTNet::stop() {
     while (serverListenThreadActive) {
       std::this_thread::sleep_for(std::chrono::microseconds(1000));
       if (!--threadRunning) {
-        LOGGER(true, LOGG_FATAL, "SRTNet server thread is still running after 1 second. Crash and burn baby!!");
+        SRT_LOGGER(true, LOGG_FATAL, "SRTNet server thread is still running after 1 second. Crash and burn baby!!");
         break;
       }
     }
-    LOGGER(true, LOGG_NOTIFY, "Server stopped");
+    SRT_LOGGER(true, LOGG_NOTIFY, "Server stopped");
     currentMode = Mode::unknown;
     return true;
   } else if (currentMode == Mode::client) {
@@ -404,7 +404,7 @@ bool SRTNet::stop() {
     if (context) {
       result = srt_close(context);
       if (result == SRT_ERROR) {
-        LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
+        SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
         return false;
       }
     }
@@ -413,15 +413,15 @@ bool SRTNet::stop() {
     while (clientThreadActive) {
       std::this_thread::sleep_for(std::chrono::microseconds(1000));
       if (!--threadRunning) {
-        LOGGER(true, LOGG_FATAL, "SRTNet client thread is still running after 1 second. Crash and burn baby!!");
+        SRT_LOGGER(true, LOGG_FATAL, "SRTNet client thread is still running after 1 second. Crash and burn baby!!");
         break;
       }
     }
-    LOGGER(true, LOGG_NOTIFY, "Client stopped");
+    SRT_LOGGER(true, LOGG_NOTIFY, "Client stopped");
     currentMode = Mode::unknown;
     return true;
   }
-  LOGGER(true, LOGG_ERROR, "SRTNet nothing to stop");
+  SRT_LOGGER(true, LOGG_ERROR, "SRTNet nothing to stop");
   return true;
 }
 
@@ -431,17 +431,17 @@ bool SRTNet::getStatistics(SRT_TRACEBSTATS *currentStats, int clear, int instant
   if (currentMode == Mode::client && clientActive && context) {
     result = srt_bistats(context, currentStats, clear, instantaneous);
     if (result == SRT_ERROR) {
-      LOGGER(true, LOGG_ERROR, "srt_bistats failed: " << srt_getlasterror_str());
+      SRT_LOGGER(true, LOGG_ERROR, "srt_bistats failed: " << srt_getlasterror_str());
       return false;
     }
   } else if (currentMode == Mode::server && serverActive && targetSystem) {
     result = srt_bistats(targetSystem, currentStats, clear, instantaneous);
     if (result == SRT_ERROR) {
-      LOGGER(true, LOGG_ERROR, "srt_bistats failed: " << srt_getlasterror_str());
+      SRT_LOGGER(true, LOGG_ERROR, "srt_bistats failed: " << srt_getlasterror_str());
       return false;
     }
   } else {
-    LOGGER(true, LOGG_ERROR, "Statistics not available");
+    SRT_LOGGER(true, LOGG_ERROR, "Statistics not available");
     return false;
   }
   return true;

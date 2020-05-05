@@ -16,7 +16,7 @@
 #define LOGG_MASK  LOGG_NOTIFY | LOGG_WARN | LOGG_ERROR | LOGG_FATAL //What to logg?
 
 #ifdef DEBUG
-#define LOGGER(l,g,f) \
+#define SRT_LOGGER(l,g,f) \
 { \
 std::ostringstream a; \
 if (g == (LOGG_NOTIFY & (LOGG_MASK))) {a << "Notification: ";} \
@@ -30,7 +30,7 @@ std::cout << a.str(); \
 } \
 }
 #else
-#define LOGGER(l,g,f)
+#define SRT_LOGGER(l,g,f)
 #endif
 // GLobal Logger -- End
 
