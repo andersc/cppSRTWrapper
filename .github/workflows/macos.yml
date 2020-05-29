@@ -13,10 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Fix Open SSL1
-      run: export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
-    - name: Fix Open SSL2
-      run: export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
+    - name: Fix Open SSL
+      run: export OPENSSL_INCLUDE_DIR=`brew --prefix openssl`/include
     - name: CMake set-up
       run: cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
