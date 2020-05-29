@@ -18,7 +18,6 @@
 #include "srt/srtcore/srt.h"
 #include <arpa/inet.h>
 
-
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 
 //Fill this class with all information you need for the duration of the connection both client and server
@@ -54,8 +53,8 @@ public:
     SRTNet();
     virtual ~SRTNet();
 
-    bool startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu);
-    bool startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> &ctx, int mtu);
+    bool startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu, std::string psk="");
+    bool startClient(std::string host, uint16_t port, int reorder, int32_t latency, int overhead, std::shared_ptr<NetworkConnection> &ctx, int mtu, std::string psk="");
     bool stop();
     bool sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem = 0);
     bool getStatistics(SRT_TRACEBSTATS *currentStats,int clear, int instantaneous, SRTSOCKET targetSystem = 0);
@@ -69,9 +68,6 @@ public:
     std::atomic<bool> serverListenThreadActive;
     std::atomic<bool> serverPollThreadActive;
     std::atomic<bool> clientThreadActive;
-
-
-
 
     // delete copy and move constructors and assign operators
     SRTNet(SRTNet const&) = delete;             // Copy construct
@@ -94,7 +90,6 @@ private:
     std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> clientList = {};
     std::mutex clientListMtx;
     std::shared_ptr<NetworkConnection> clientContext = nullptr;
-
 };
 
 

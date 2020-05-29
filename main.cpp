@@ -148,7 +148,7 @@ int main(int argc, const char * argv[]) {
      * overhead: The % overhead tolerated for retransmits relative the original data stream.
      * mtu: max 1456
      */
-    if (!mySRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100, 1456)) {
+    if (!mySRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100, 1456,"Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT Server failed to start." << std::endl;
         return EXIT_FAILURE;
     }
@@ -161,7 +161,7 @@ int main(int argc, const char * argv[]) {
     client1Connection->object = std::move(a1);
 
     mySRTNetClient1.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-    if (!mySRTNetClient1.startClient("127.0.0.1", 8000, 16, 1000, 100,client1Connection, 1456)) {
+    if (!mySRTNetClient1.startClient("127.0.0.1", 8000, 16, 1000, 100,client1Connection, 1456,"Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT client1 failed starting." << std::endl;
         return EXIT_FAILURE;
     }
@@ -171,7 +171,7 @@ int main(int argc, const char * argv[]) {
     a2->test = 2;
     client2Connection->object = std::move(a2);
     mySRTNetClient2.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-    if (!mySRTNetClient2.startClient("127.0.0.1", 8000, 16, 1000, 100,client2Connection, 1456)) {
+    if (!mySRTNetClient2.startClient("127.0.0.1", 8000, 16, 1000, 100,client2Connection, 1456,"Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT client2 failed starting." << std::endl;
         return EXIT_FAILURE;
     }
