@@ -13,8 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Fix Open SSL
-      run: brew link --force openssl
+    - name: Fix Open SSL1
+      run: export LDFLAGS="-L/usr/local/opt/openssl@1.1/lib"
+    - name: Fix Open SSL2
+      run: export CPPFLAGS="-I/usr/local/opt/openssl@1.1/include"
     - name: CMake set-up
       run: cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
