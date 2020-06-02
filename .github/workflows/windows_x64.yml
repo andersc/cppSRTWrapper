@@ -13,10 +13,14 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: configure
+    - name: Get OpenSSL
       run: choco install openssl
+    - name: Get pthreads
+      run: wget https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
+    - name: Unpack pthreads
+      run: Expand-Archive -LiteralPath  .\pthreads.zip
     - name: CMake set-up
-      run: cmake --config Release .
+      run: cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release .
     - name: make
       run: cmake --build . --config Release
 
