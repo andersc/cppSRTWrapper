@@ -19,6 +19,8 @@ The API of SRT has more features than what's exposed in this C++ wrapper, howeve
 
 Requires cmake version >= **3.10** and **C++17**
 
+*Linux and MacOS* ->
+
 **Release:**
 
 ```sh
@@ -41,11 +43,21 @@ Output:
 
 **libsrtnet.a**
 
-The static SRT C++ wrapper library 
+The static SRTWrapper C++ wrapper library 
  
 **cppSRTWrapper**
 
 *cppSRTWrapper* (executable) runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass.
+
+-
+
+*Windows* ->
+
+```sh
+mkdir build
+cd build
+cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release ..
+```
 
 ## Using the SRT wrapper
 

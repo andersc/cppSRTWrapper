@@ -16,7 +16,14 @@
 #include <mutex>
 #include <any>
 #include "srt/srtcore/srt.h"
+
+#ifdef WIN32
+#include <Winsock2.h>
+#define _WINSOCKAPI_
+#include <ws2tcpip.h>
+#else
 #include <arpa/inet.h>
+#endif
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 

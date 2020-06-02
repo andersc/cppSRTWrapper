@@ -25,9 +25,27 @@ ExternalProject_Add(project_srt
         INSTALL_COMMAND ""
         )
 
+ExternalProject_Add(project_srt_win
+        GIT_REPOSITORY https://github.com/Haivision/srt.git
+        UPDATE_COMMAND ""
+        SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
+        BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
+        CONFIGURE_COMMAND cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DPTHREAD_LIBRARY=${CMAKE_CURRENT_SOURCE_DIR}/pthreads/runtimes/win-x64/native/release/pthread_lib.lib -DPTHREAD_INCLUDE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/pthreads/sources ${CMAKE_CURRENT_SOURCE_DIR}/srt
+        BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
+        GIT_PROGRESS 1
+        STEP_TARGETS build
+        EXCLUDE_FROM_ALL TRUE
+        INSTALL_COMMAND ""
+        )
+
 add_library(srt STATIC IMPORTED)
-set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/libsrt.a)
-add_dependencies(srt project_srt)
+IF (WIN32)
+    set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/${CMAKE_BUILD_TYPE}/srt_static.lib)
+    add_dependencies(srt project_srt_win)
+ELSE()
+    set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/libsrt.a)
+    add_dependencies(srt project_srt)
+ENDIF()
 
 find_package (Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
