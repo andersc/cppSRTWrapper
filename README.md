@@ -73,7 +73,7 @@ Then inside that directory (only needed once) ->
 
 
 ```sh
-wget https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
+Invoke-WebRequest https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
 Expand-Archive -LiteralPath  .\pthreads.zip
 ```
 
