@@ -1,0 +1,22 @@
+name: Windows x64
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: configure
+      run: choco install openssl
+    - name: CMake set-up
+      run: cmake --config Release .
+    - name: make
+      run: cmake --build . --config Release
+
