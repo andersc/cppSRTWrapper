@@ -176,7 +176,7 @@ int main(int argc, const char * argv[]) {
         return EXIT_FAILURE;
     }
 
-    sleep(2);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
    // auto clients  = mySRTNetServer.getActiveClients();
   //  std::cout << "The server got " << clients->mClientList->size() << " clients." << std::endl;
@@ -221,7 +221,7 @@ int main(int argc, const char * argv[]) {
     }
 
     std::cout << "Done sending" << std::endl;
-    sleep(4);
+    std::this_thread::sleep_for(std::chrono::seconds(4));
     std::cout << "Get statistics." << std::endl;
 
     //Get statistics like this ->
@@ -247,7 +247,7 @@ int main(int argc, const char * argv[]) {
 
     std::cout << "SRT garbagecollect" << std::endl;
     mySRTNetServer.stop();
-    sleep(2);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "stopClient 1" << std::endl;
     mySRTNetClient1.stop();
     std::cout << "stopClient 2" << std::endl;

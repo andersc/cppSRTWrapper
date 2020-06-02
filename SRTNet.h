@@ -21,6 +21,7 @@
 #include <Winsock2.h>
 #define _WINSOCKAPI_
 #include <ws2tcpip.h>
+#include <io.h>
 #else
 #include <arpa/inet.h>
 #endif
