@@ -51,13 +51,50 @@ The static SRTWrapper C++ wrapper library
 
 -
 
-*Windows* ->
+# Building for windows
+
+* Prepare your system by installing latest powershell (min version 3.0)
+
+* Follow the instructions and install **chocolatey** -> [https://chocolatey.org](https://chocolatey.org)
+
+* Install dependencies
+
+```sh
+choco install openssl
+choco install cmake
+choco install git
+```
+
+Clone this repository to a directory of your choice.
+
+Then inside that directory (only needed once) ->
+
+
+```sh
+wget https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
+Expand-Archive -LiteralPath  .\pthreads.zip
+```
+
+**Build->**
+
+**Release:**
 
 ```sh
 mkdir build
 cd build
 cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
 ```
+
+**Debug:**
+
+```sh
+mkdir build
+cd build
+cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Debug ..
+cmake --build . --config Debug
+```
+
 
 ## Using the SRT wrapper
 
