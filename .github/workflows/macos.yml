@@ -13,13 +13,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: openssl
+      run: brew install openssl
     - name: Fix Open SSL
       run: |
-            export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
-            export OPENSSL_LIB_DIR=$(brew --prefix openssl)"/lib"
-            export OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)"/include"
-    - name: CMake set-up
-      run: ./configure
+        export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+        export OPENSSL_LIB_DIR=$(brew --prefix openssl)"/lib"
+        export OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)"/include"
     - name: CMake set-up
       run: cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
