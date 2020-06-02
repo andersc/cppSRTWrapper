@@ -2,16 +2,18 @@
 
 *Simple C++ wrapper of the [SRT](https://github.com/Haivision/srt) protocol*.
 
-SRT is a mix of TCP and UDP where SRT tries to re-send lost data (as TCP would) but only to a dedline in time specified, when the deadline is reached and if the data has not arrived it's marked as lost (as UDP would).
+The SRT Protocol is a UDP based protocol. SRT acts as a mix of TCP and UDP where SRT tries to re-send lost data (as TCP would) but only to a dedline in time specified, when the deadline is reached and if the data has not arrived it's marked as lost (as UDP would).
 
 Streaming media solutions benefit from this approach and SRT is adoppted widly across the media comunity. This C++ wrapper is simplifying implementations of SRT in C++ projects and with only a few lines of code you can create a server and/or a client. 
 
-The API of SRT has more features than what's exposed in this C++ wrapper however the important parts are. If you feel this wrapper is missing any functionalty or features please let me know.
+The API of SRT has more features than what's exposed in this C++ wrapper, however the base functions exists. If you feel this wrapper is missing any functionalty or features please let me know.
  
 
 **Current auto build status:**
 
 ![Ubuntu 18.04](https://github.com/andersc/cppSRTWrapper/workflows/Ubuntu%2018.04/badge.svg)
+
+![macos](https://github.com/andersc/cppSRTWrapper/workflows/macos/badge.svg)
 
 ## Building
 
