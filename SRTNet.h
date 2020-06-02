@@ -22,6 +22,7 @@
 #define _WINSOCKAPI_
 #include <ws2tcpip.h>
 #include <io.h>
+#pragma comment( lib, "ws2_32.lib")
 #else
 #include <arpa/inet.h>
 #endif
