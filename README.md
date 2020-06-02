@@ -15,6 +15,8 @@ The API of SRT has more features than what's exposed in this C++ wrapper, howeve
 
 ![macos](https://github.com/andersc/cppSRTWrapper/workflows/macos/badge.svg)
 
+![Windows x64](https://github.com/andersc/cppSRTWrapper/workflows/Windows%20x64/badge.svg)
+
 ## Building
 
 Requires cmake version >= **3.10** and **C++17**
