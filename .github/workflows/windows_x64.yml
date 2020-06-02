@@ -16,7 +16,7 @@ jobs:
     - name: Get OpenSSL
       run: choco install openssl
     - name: Get pthreads
-      run: wget https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
+      run: Invoke-WebRequest https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
     - name: Unpack pthreads
       run: Expand-Archive -LiteralPath  .\pthreads.zip
     - name: CMake set-up
