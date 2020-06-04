@@ -21,7 +21,9 @@ The API of SRT has more features than what's exposed in this C++ wrapper, howeve
 
 Requires cmake version >= **3.10** and **C++17**
 
-*Linux and MacOS* ->
+*Linux, MacOS and Windows*
+
+(Read below for how to prepare the different systems)
 
 **Release:**
 
@@ -53,48 +55,49 @@ The static SRTWrapper C++ wrapper library
 
 -
 
-# Building for windows
+# Preparing Linux
 
-* Prepare your system by installing latest powershell (min version 3.0)
+```sh
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install tclsh pkg-config cmake libssl-dev build-essential
+```
 
-* Follow the instructions and install **chocolatey** -> [https://chocolatey.org](https://chocolatey.org)
+# Preparing MacOS
 
-* Install dependencies
+Prepare your system by installing ->
+
+* [Xcode](https://itunes.apple.com/us/app/xcode/id497799835)
+. Then start Xcode and let xcode install Command Line Tools or run *xcode-select --install* from the terminal.
+
+* **Homebrew** -> [[https://brew.sh](https://brew.sh))
+
+* Then Install dependencies
+
+```sh
+brew install cmake
+brew install openssl
+export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+export OPENSSL_LIB_DIR=$(brew --prefix openssl)"/lib"
+export OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)"/include"
+```
+
+# Preparing Windows
+
+
+Prepare your system by installing->
+
+* [Visual Studio](https://visualstudio.microsoft.com/downloads/)
+(Also add the CMake build support if you plan to develop applications)
+
+*  **chocolatey** -> [https://chocolatey.org](https://chocolatey.org)
+
+* Then Install dependencies
 
 ```sh
 choco install openssl
 choco install cmake
 choco install git
-```
-
-Clone this repository to a directory of your choice.
-
-Then inside that directory (only needed once) ->
-
-
-```sh
-Invoke-WebRequest https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 -OutFile pthreads.zip
-Expand-Archive -LiteralPath  .\pthreads.zip
-```
-
-**Build->**
-
-**Release:**
-
-```sh
-mkdir build
-cd build
-cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release ..
-cmake --build . --config Release
-```
-
-**Debug:**
-
-```sh
-mkdir build
-cd build
-cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Debug ..
-cmake --build . --config Debug
 ```
 
 
