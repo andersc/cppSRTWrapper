@@ -17,3 +17,11 @@ jobs:
       run: cmake -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl .
     - name: make
       run: make
+    - uses: actions/upload-artifact@v2
+      with:
+        name: libsrtnet_osx
+        path: ./libsrtnet.a
+    - uses: actions/upload-artifact@v2
+      with:
+        name: libsrt_osx
+        path: ./srt/libsrt.a
