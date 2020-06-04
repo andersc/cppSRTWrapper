@@ -8,7 +8,6 @@
 SRTNet::SRTNet() {
     serverActive = false;
     serverListenThreadActive = false;
-    serverPollThreadActive = false;
     clientActive = false;
     clientThreadActive = false;
     SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet constructed");
@@ -33,12 +32,12 @@ void SRTNet::closeAllClientSockets() {
 }
 
 bool SRTNet::isIPv4(const std::string &str) {
-    struct sockaddr_in sa;
+    struct sockaddr_in sa = {0};
     return inet_pton(AF_INET, str.c_str(), &(sa.sin_addr)) != 0;
 }
 
 bool SRTNet::isIPv6(const std::string &str) {
-    struct sockaddr_in6 sa;
+    struct sockaddr_in6 sa = {0};
     return inet_pton(AF_INET6, str.c_str(), &(sa.sin6_addr)) != 0;
 }
 
@@ -194,9 +193,11 @@ void SRTNet::serverEventHandler() {
                     srt_epoll_remove_usock(poll_id, thisSocket);
                     srt_close(thisSocket);
                     clientListMtx.unlock();
-                } else if (result > 0 && recievedData) {
+                } else if (result > 0 && receivedData) {
                     auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
-                    recievedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
+                    receivedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
+                } else if (result > 0 && receivedDataNoCopy) {
+                    receivedDataNoCopy(msg, result, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
                 }
             }
         } else if (ret == -1) {
@@ -219,7 +220,7 @@ void SRTNet::waitForSRTClient() {
     closeAllClientSockets();
 
     while (serverActive) {
-        struct sockaddr_storage their_addr;
+        struct sockaddr_storage their_addr = {0};
         SRT_LOGGER(true, LOGG_NOTIFY, "SRT Server wait for client");
         int addr_size = sizeof their_addr;
         SRTSOCKET newSocketCandidate = srt_accept(context, (struct sockaddr *) &their_addr, &addr_size);
@@ -246,7 +247,7 @@ void SRTNet::waitForSRTClient() {
     serverListenThreadActive = false;
 }
 
-void SRTNet::getActiveClients(std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)> function) {
+void SRTNet::getActiveClients(const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)>& function) {
     clientListMtx.lock();
     function(clientList);
     clientListMtx.unlock();
@@ -377,9 +378,11 @@ void SRTNet::clientWorker() {
                 SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << srt_getlasterror_str());
             }
             break;
-        } else if (result > 0 && recievedData) {
+        } else if (result > 0 && receivedData) {
             auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
-            recievedData(pointer, thisMSGCTRL, clientContext, context);
+            receivedData(pointer, thisMSGCTRL, clientContext, context);
+        } else if (result > 0 && receivedDataNoCopy) {
+            receivedDataNoCopy(msg, result, thisMSGCTRL, clientContext, context);
         }
     }
 

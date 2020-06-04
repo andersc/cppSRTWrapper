@@ -4,9 +4,7 @@
 //
 
 // Simple SRT C++ wrapper
-// The code in this sample project tests the wrapper and shows how to use it
-// The code is NOT optimized for performance.. For performance you need to write your own wrapper
-// and not use smart pointers and callbacks in the dataplane.
+// The code in this sample project tests the wrapper and shows how to use the API
 
 #include <iostream>
 #include <thread>
@@ -19,7 +17,6 @@ SRTNet mySRTNetClient1;
 SRTNet mySRTNetClient2;
 
 std::atomic_bool closeConnection1;
-std::atomic_bool runOnce;
 
 //This is my class managed by the network connection.
 class MyClass {
@@ -133,13 +130,13 @@ int main(int argc, const char * argv[]) {
 
 
     closeConnection1 = false;
-    runOnce = true;
+    bool runOnce = true;
 
     std::cout << "SRT wrapper start." << std::endl;
 
     //Register the server callbacks
     mySRTNetServer.clientConnected=std::bind(&validateConnection, std::placeholders::_1, std::placeholders::_2);
-    mySRTNetServer.recievedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    mySRTNetServer.receivedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
     /*Start the server
      * ip: bind to this ip (can be IPv4 or IPv6)
      * port: bind to this port
@@ -160,7 +157,7 @@ int main(int argc, const char * argv[]) {
     a1->test = 1;
     client1Connection->object = std::move(a1);
 
-    mySRTNetClient1.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    mySRTNetClient1.receivedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
     if (!mySRTNetClient1.startClient("127.0.0.1", 8000, 16, 1000, 100,client1Connection, 1456,"Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT client1 failed starting." << std::endl;
         return EXIT_FAILURE;
@@ -170,7 +167,7 @@ int main(int argc, const char * argv[]) {
     std::shared_ptr<MyClass> a2 = std::make_shared<MyClass>();
     a2->test = 2;
     client2Connection->object = std::move(a2);
-    mySRTNetClient2.recievedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+    mySRTNetClient2.receivedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
     if (!mySRTNetClient2.startClient("127.0.0.1", 8000, 16, 1000, 100,client2Connection, 1456,"Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT client2 failed starting." << std::endl;
         return EXIT_FAILURE;
@@ -184,7 +181,7 @@ int main(int argc, const char * argv[]) {
 
   mySRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &clientList)
   {
-    std::cout << "The server got " << clientList.size() << " clients." << std::endl;
+    std::cout << "The server got " << clientList.size() << " client(s)." << std::endl;
   }
   );
 
@@ -244,8 +241,7 @@ int main(int argc, const char * argv[]) {
   }
   );
 
-
-    std::cout << "SRT garbagecollect" << std::endl;
+    std::cout << "SRT garbage collect" << std::endl;
     mySRTNetServer.stop();
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "stopClient 1" << std::endl;
