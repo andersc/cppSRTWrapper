@@ -54,11 +54,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/common)
 
 add_library(srtnet STATIC SRTNet.cpp)
-IF (WIN32)
-    target_link_libraries(srtnet srt ${OPENSSL_LIBRARIES} ${CMAKE_CURRENT_SOURCE_DIR}/pthreads/runtimes/win-x64/native/release/pthread_lib.lib)
-ELSE()
-    target_link_libraries(srtnet srt ${OPENSSL_LIBRARIES} Threads::Threads)
-ENDIF()
+target_link_libraries(srtnet srt ${OPENSSL_LIBRARIES} Threads::Threads)
 
 add_executable(cppSRTWrapper main.cpp)
 target_link_libraries(cppSRTWrapper srtnet)
