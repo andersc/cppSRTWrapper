@@ -43,15 +43,29 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 cmake --build . --config Debug
 ```
 
-Output: 
+##Output (Linux and MacOS): 
 
-**libsrtnet.a**
+**./libsrtnet.a** (The SRT-wrapper lib)
 
-The static SRTWrapper C++ wrapper library 
+**(source_root)/srt/libsrt.a** (The SRT-lib)
  
-**cppSRTWrapper**
+**./cppSRTWrapper** (Runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass.)
 
-*cppSRTWrapper* (executable) runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass.
+
+##Output (Windows): 
+
+**./Release/srtnet.lib** (The wrapper lib Release build)
+
+**./Debug/srtnet.lib** (The wrapper lib Debug build)
+
+**(source_root)/srt/Release/srt_static.lib** (The SRT-lib Release build)
+
+**(source_root)/srt/Debug/srt_static.lib** (The SRT-lib Release build)
+ 
+**./Release/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass. Release build)
+ 
+**./Debug/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass. Debug build)
+
 
 -
 
@@ -103,7 +117,7 @@ choco install git
 
 ## Using the SRT wrapper
 
-###Server:
+**Server:**
 
 ```cpp
 
@@ -173,7 +187,7 @@ return a1;
 /
 ```
 
-###Client:
+**Client:**
 
 ```cpp
 
