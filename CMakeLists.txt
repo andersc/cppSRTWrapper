@@ -30,7 +30,7 @@ ExternalProject_Add(project_srt_win
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
-        CONFIGURE_COMMAND cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DPTHREAD_LIBRARY=${CMAKE_CURRENT_SOURCE_DIR}/pthreads/runtimes/win-x64/native/release/pthread_lib.lib -DPTHREAD_INCLUDE_DIR=${CMAKE_CURRENT_SOURCE_DIR}/pthreads/sources ${CMAKE_CURRENT_SOURCE_DIR}/srt
+        CONFIGURE_COMMAND cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DENABLE_STDCXX_SYNC=ON ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
         GIT_PROGRESS 1
         STEP_TARGETS build
@@ -40,14 +40,6 @@ ExternalProject_Add(project_srt_win
 
 add_library(srt STATIC IMPORTED)
 IF (WIN32)
-    IF(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/pthreads")
-        file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pthreads)
-        file(DOWNLOAD https://www.nuget.org/api/v2/package/cinegy.pthreads-win64-2015/2.9.1.24 ${CMAKE_CURRENT_SOURCE_DIR}/pthreads.zip
-                SHOW_PROGRESS
-                EXPECTED_HASH MD5=5c83034ed9fb053f68c43ed6eddee5d0)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E tar -xvf ${CMAKE_CURRENT_SOURCE_DIR}/pthreads.zip
-                WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/pthreads/)
-    ENDIF()
     set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/${CMAKE_BUILD_TYPE}/srt_static.lib)
     add_dependencies(srt project_srt_win)
 ELSE()
