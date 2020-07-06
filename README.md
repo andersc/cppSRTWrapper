@@ -17,6 +17,12 @@ The API of SRT has more features than what's exposed in this C++ wrapper, howeve
 
 ![Windows x64](https://github.com/andersc/cppSRTWrapper/workflows/Windows%20x64/badge.svg)
 
+**Code scanning alerts**
+
+![Code scanning - action](https://github.com/andersc/cppSRTWrapper/workflows/Code%20scanning%20-%20action/badge.svg)
+
+[Code scanning details](https://github.com/andersc/cppSRTWrapper/security/code-scanning)
+
 ## Building
 
 Requires cmake version >= **3.10** and **C++17**
