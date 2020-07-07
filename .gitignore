@@ -77,3 +77,5 @@ fabric.properties
 cmake-build-debug/
 cmake-build-release/
 srt
+project_srt-prefix/
+project_srt_win-prefix/
