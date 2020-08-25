@@ -21,12 +21,18 @@ std::atomic_bool closeConnection1;
 //This is my class managed by the network connection.
 class MyClass {
 public:
-  MyClass() {
+  MyClass(SRTSOCKET srtSocket) {
     isKnown = false;
+    clientSocket = srtSocket;
+  };
+  ~MyClass() {
+      if (clientSocket)
+      std::cout << "Client -> " << clientSocket << " disconnected. (From Object)" << std::endl;
   };
   int test = 0;
   int counter = 0;
   std::atomic_bool isKnown;
+  SRTSOCKET clientSocket;
 };
 
 //**********************************
@@ -62,7 +68,7 @@ std::shared_ptr<NetworkConnection> validateConnection(struct sockaddr &sin, SRTS
   }
 
     auto a1 = std::make_shared<NetworkConnection>();
-    a1->object = std::make_shared<MyClass>();
+    a1->object = std::make_shared<MyClass>(newSocket);
     return a1;
 
 }
@@ -100,7 +106,7 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &ms
 
 //Client disconnect callback.
 void clientDisconnect(std::shared_ptr<NetworkConnection> ctx, SRTSOCKET clientHandle) {
-    std::cout << "Client -> " << clientHandle << " disconnected." << std::endl;
+    std::cout << "Client -> " << clientHandle << " disconnected. (From callback)" << std::endl;
 }
 
 
@@ -163,7 +169,7 @@ int main(int argc, const char * argv[]) {
     //The SRT connection is bidirectional and you are able to set different parameters for a particular direction
     //The parameters have the same meaning as for the above server but on the client side.
     auto client1Connection=std::make_shared<NetworkConnection>();
-    std::shared_ptr<MyClass> a1 = std::make_shared<MyClass>();
+    std::shared_ptr<MyClass> a1 = std::make_shared<MyClass>(0);
     a1->test = 1;
     client1Connection->object = std::move(a1);
 
@@ -174,7 +180,7 @@ int main(int argc, const char * argv[]) {
     }
 
     auto client2Connection=std::make_shared<NetworkConnection>();
-    std::shared_ptr<MyClass> a2 = std::make_shared<MyClass>();
+    std::shared_ptr<MyClass> a2 = std::make_shared<MyClass>(0);
     a2->test = 2;
     client2Connection->object = std::move(a2);
     mySRTNetClient2.receivedData=std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);

@@ -192,13 +192,14 @@ void SRTNet::serverEventHandler() {
                 if (result == SRT_ERROR) {
                     SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << result << " " << srt_getlasterror_str());
                     clientListMtx.lock();
-                    if(clientDisconnected) {
-                        clientDisconnected(clientList.find(thisSocket)->second,thisSocket);
-                    }
+                    auto lCtx = clientList.find(thisSocket)->second;
                     clientList.erase(clientList.find(thisSocket)->first);
                     srt_epoll_remove_usock(poll_id, thisSocket);
                     srt_close(thisSocket);
                     clientListMtx.unlock();
+                    if(clientDisconnected) {
+                        clientDisconnected(lCtx, thisSocket);
+                    }
                 } else if (result > 0 && receivedData) {
                     auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
                     receivedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
