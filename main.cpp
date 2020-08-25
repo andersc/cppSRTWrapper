@@ -98,6 +98,12 @@ bool handleData(std::unique_ptr <std::vector<uint8_t>> &content, SRT_MSGCTRL &ms
     return true;
 };
 
+//Client disconnect callback.
+void clientDisconnect(std::shared_ptr<NetworkConnection> ctx, SRTSOCKET clientHandle) {
+    std::cout << "Client -> " << clientHandle << " disconnected." << std::endl;
+}
+
+
 //**********************************
 //Client part
 //**********************************
@@ -137,6 +143,10 @@ int main(int argc, const char * argv[]) {
     //Register the server callbacks
     mySRTNetServer.clientConnected=std::bind(&validateConnection, std::placeholders::_1, std::placeholders::_2);
     mySRTNetServer.receivedData=std::bind(&handleData, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+
+    //The disconnect callback is optional you can use the destructor in your embedded object to detect disconnects also
+    mySRTNetServer.clientDisconnected=std::bind(&clientDisconnect, std::placeholders::_1, std::placeholders::_2);
+
     /*Start the server
      * ip: bind to this ip (can be IPv4 or IPv6)
      * port: bind to this port

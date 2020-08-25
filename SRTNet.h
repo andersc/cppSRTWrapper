@@ -144,6 +144,9 @@ public:
     std::function<void(const uint8_t *data, size_t len, SRT_MSGCTRL &msgCtrl,
                        std::shared_ptr<NetworkConnection> &ctx, SRTSOCKET socket)> receivedDataNoCopy = nullptr;
 
+    ///Callback handling disconnecting clients
+    std::function<void(std::shared_ptr<NetworkConnection> &ctx,
+                                                     SRTSOCKET socket)> clientDisconnected = nullptr;
 
     // delete copy and move constructors and assign operators
     SRTNet(SRTNet const &) = delete;             // Copy construct

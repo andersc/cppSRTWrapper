@@ -23,6 +23,9 @@ void SRTNet::closeAllClientSockets() {
     for (auto &x: clientList) {
         SRTSOCKET g = x.first;
         result = srt_close(g);
+        if(clientDisconnected) {
+            clientDisconnected(x.second,g);
+        }
         if (result == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
         }
@@ -189,6 +192,9 @@ void SRTNet::serverEventHandler() {
                 if (result == SRT_ERROR) {
                     SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << result << " " << srt_getlasterror_str());
                     clientListMtx.lock();
+                    if(clientDisconnected) {
+                        clientDisconnected(clientList.find(thisSocket)->second,thisSocket);
+                    }
                     clientList.erase(clientList.find(thisSocket)->first);
                     srt_epoll_remove_usock(poll_id, thisSocket);
                     srt_close(thisSocket);
