@@ -1,3 +1,8 @@
+//      __________  ____     _____ ____  ______   _       ______  ___    ____  ____  __________
+//     / ____/ __ \/ __ \   / ___// __ \/_  __/  | |     / / __ \/   |  / __ \/ __ \/ ____/ __ \
+//    / /   / /_/ / /_/ /   \__ \/ /_/ / / /     | | /| / / /_/ / /| | / /_/ / /_/ / __/ / /_/ /
+//   / /___/ ____/ ____/   ___/ / _, _/ / /      | |/ |/ / _, _/ ___ |/ ____/ ____/ /___/ _, _/
+//   \____/_/   /_/       /____/_/ |_| /_/       |__/|__/_/ |_/_/  |_/_/   /_/   /_____/_/ |_|
 //
 // Created by Anders Cedronius on 2019-04-21.
 //
@@ -6,10 +11,10 @@
 #include "SRTNetInternal.h"
 
 SRTNet::SRTNet() {
-    serverActive = false;
-    serverListenThreadActive = false;
-    clientActive = false;
-    clientThreadActive = false;
+    mServerActive = false;
+    mServerListenThreadActive = false;
+    mClientActive = false;
+    mClientThreadActive = false;
     SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet constructed");
 }
 
@@ -18,52 +23,54 @@ SRTNet::~SRTNet() {
 }
 
 void SRTNet::closeAllClientSockets() {
-    clientListMtx.lock();
-    int result = SRT_ERROR;
-    for (auto &x: clientList) {
-        SRTSOCKET g = x.first;
-        result = srt_close(g);
+    mClientListMtx.lock();
+    int lResult = SRT_ERROR;
+    for (auto &rClient: mClientList) {
+        SRTSOCKET lSocket = rClient.first;
+        lResult = srt_close(lSocket);
         if(clientDisconnected) {
-            clientDisconnected(x.second,g);
+            clientDisconnected(rClient.second, lSocket);
         }
-        if (result == SRT_ERROR) {
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
         }
     }
-    clientList.clear();
-    clientListMtx.unlock();
+    mClientList.clear();
+    mClientListMtx.unlock();
 }
 
-bool SRTNet::isIPv4(const std::string &str) {
-    struct sockaddr_in sa = {0};
-    return inet_pton(AF_INET, str.c_str(), &(sa.sin_addr)) != 0;
+bool SRTNet::isIPv4(const std::string &rStr) {
+    struct sockaddr_in lSa = {0};
+    return inet_pton(AF_INET, rStr.c_str(), &(lSa.sin_addr)) != 0;
 }
 
-bool SRTNet::isIPv6(const std::string &str) {
+bool SRTNet::isIPv6(const std::string &rStr) {
     struct sockaddr_in6 sa = {0};
-    return inet_pton(AF_INET6, str.c_str(), &(sa.sin6_addr)) != 0;
+    return inet_pton(AF_INET6, rStr.c_str(), &(sa.sin6_addr)) != 0;
 }
 
-bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu,
-                         std::string psk) {
+bool SRTNet::startServer(std::string lIp, uint16_t lPort, int lReorder, int32_t lLatency, int lOverhead, int lMtu,
+                         std::string lPsk, std::shared_ptr<NetworkConnection> pCtx) {
 
-    struct sockaddr_in saV4 = {0};
-    struct sockaddr_in6 saV6 = {0};
 
-    int ipType = AF_INET;
-    if (isIPv4(ip)) {
-        ipType = AF_INET;
-    } else if (isIPv6(ip)) {
-        ipType = AF_INET6;
+
+    struct sockaddr_in lSaV4 = {0};
+    struct sockaddr_in6 lSaV6 = {0};
+
+    int lIpType = AF_INET;
+    if (isIPv4(lIp)) {
+        lIpType = AF_INET;
+    } else if (isIPv6(lIp)) {
+        lIpType = AF_INET6;
     } else {
         SRT_LOGGER(true, LOGG_ERROR, " " << "Provided IP-Address not valid.");
     }
 
-    std::lock_guard<std::mutex> lock(netMtx);
-    int result = 0;
+    std::lock_guard<std::mutex> lLock(mNetMtx);
+    int lResult = 0;
 
-    int32_t yes = 1;
-    if (currentMode != Mode::unknown) {
+    int32_t lYes = 1;
+    if (mCurrentMode != Mode::unknown) {
         SRT_LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
         return false;
     }
@@ -73,416 +80,418 @@ bool SRTNet::startServer(std::string ip, uint16_t port, int reorder, int32_t lat
         return false;
     }
 
-    context = srt_create_socket();
-    if (context == SRT_ERROR) {
+    mConnectionContext = pCtx; //retain the optional context
+
+    mContext = srt_create_socket();
+    if (mContext == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
         return false;
     }
 
-    if (ipType == AF_INET) {
-        saV4.sin_family = AF_INET;
-        saV4.sin_port = htons(port);
-        if (inet_pton(AF_INET, ip.c_str(), &saV4.sin_addr) != 1) {
+    if (lIpType == AF_INET) {
+        lSaV4.sin_family = AF_INET;
+        lSaV4.sin_port = htons(lPort);
+        if (inet_pton(AF_INET, lIp.c_str(), &lSaV4.sin_addr) != 1) {
             SRT_LOGGER(true, LOGG_FATAL, "inet_pton failed ");
-            srt_close(context);
+            srt_close(mContext);
             return false;
         }
     }
 
-    if (ipType == AF_INET6) {
-        saV6.sin6_family = AF_INET6;
-        saV6.sin6_port = htons(port);
-        if (inet_pton(AF_INET6, ip.c_str(), &saV6.sin6_addr) != 1) {
+    if (lIpType == AF_INET6) {
+        lSaV6.sin6_family = AF_INET6;
+        lSaV6.sin6_port = htons(lPort);
+        if (inet_pton(AF_INET6, lIp.c_str(), &lSaV6.sin6_addr) != 1) {
             SRT_LOGGER(true, LOGG_FATAL, "inet_pton failed ");
-            srt_close(context);
+            srt_close(mContext);
             return false;
         }
     }
 
-    result = srt_setsockflag(context, SRTO_RCVSYN, &yes, sizeof yes);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_RCVSYN, &lYes, sizeof lYes);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_RCVSYN: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_LATENCY, &lLatency, sizeof lLatency);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_LOSSMAXTTL, &lReorder, sizeof lReorder);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_OHEADBW, &lOverhead, sizeof lOverhead);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &mtu, sizeof mtu);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_PAYLOADSIZE, &lMtu, sizeof lMtu);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
         return false;
     }
 
-    if (psk.length()) {
-        int32_t aes128 = 16;
-        result = srt_setsockflag(context, SRTO_PBKEYLEN, &aes128, sizeof aes128);
-        if (result == SRT_ERROR) {
+    if (lPsk.length()) {
+        int32_t lAes128 = 16;
+        lResult = srt_setsockflag(mContext, SRTO_PBKEYLEN, &lAes128, sizeof lAes128);
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PBKEYLEN: " << srt_getlasterror_str());
             return false;
         }
 
-        result = srt_setsockflag(context, SRTO_PASSPHRASE, psk.c_str(), psk.length());
-        if (result == SRT_ERROR) {
+        lResult = srt_setsockflag(mContext, SRTO_PASSPHRASE, lPsk.c_str(), lPsk.length());
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PASSPHRASE: " << srt_getlasterror_str());
             return false;
         }
     }
 
-    if (ipType == AF_INET) {
-        result = srt_bind(context, (struct sockaddr *) &saV4, sizeof saV4);
-        if (result == SRT_ERROR) {
+    if (lIpType == AF_INET) {
+        lResult = srt_bind(mContext, (struct sockaddr *) &lSaV4, sizeof lSaV4);
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
-            srt_close(context);
+            srt_close(mContext);
             return false;
         }
     }
 
-    if (ipType == AF_INET6) {
-        result = srt_bind(context, (struct sockaddr *) &saV6, sizeof saV6);
-        if (result == SRT_ERROR) {
+    if (lIpType == AF_INET6) {
+        lResult = srt_bind(mContext, (struct sockaddr *) &lSaV6, sizeof lSaV6);
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
-            srt_close(context);
+            srt_close(mContext);
             return false;
         }
     }
 
-    result = srt_listen(context, 2);
-    if (result == SRT_ERROR) {
+    lResult = srt_listen(mContext, 2);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_listen: " << srt_getlasterror_str());
-        srt_close(context);
+        srt_close(mContext);
         return false;
     }
-    serverActive = true;
-    currentMode = Mode::server;
+    mServerActive = true;
+    mCurrentMode = Mode::server;
     std::thread(std::bind(&SRTNet::waitForSRTClient, this)).detach();
     return true;
 }
 
 
 void SRTNet::serverEventHandler() {
-    SRT_EPOLL_EVENT ready[MAX_WORKERS];
-    while (serverActive) {
-        int ret = srt_epoll_uwait(poll_id, &ready[0], 5, 1000);
-        if (ret == MAX_WORKERS + 1) {
-            ret--;
+    SRT_EPOLL_EVENT lReady[MAX_WORKERS];
+    while (mServerActive) {
+        int lRet = srt_epoll_uwait(mPollID, &lReady[0], 5, 1000);
+        if (lRet == MAX_WORKERS + 1) {
+            lRet--;
         }
 
-        if (ret > 0) {
-            for (int i = 0; i < ret; i++) {
-                uint8_t msg[2048];
-                SRT_MSGCTRL thisMSGCTRL = srt_msgctrl_default;
-                SRTSOCKET thisSocket = ready[i].fd;
-                int result = srt_recvmsg2(thisSocket, (char *) msg, sizeof msg, &thisMSGCTRL);
-                if (result == SRT_ERROR) {
-                    SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << result << " " << srt_getlasterror_str());
-                    clientListMtx.lock();
-                    auto lCtx = clientList.find(thisSocket)->second;
-                    clientList.erase(clientList.find(thisSocket)->first);
-                    srt_epoll_remove_usock(poll_id, thisSocket);
-                    srt_close(thisSocket);
-                    clientListMtx.unlock();
+        if (lRet > 0) {
+            for (int i = 0; i < lRet; i++) {
+                uint8_t lMsg[2048];
+                SRT_MSGCTRL lThisMSGCTRL = srt_msgctrl_default;
+                SRTSOCKET lThisSocket = lReady[i].fd;
+                int lResult = srt_recvmsg2(lThisSocket, (char *) lMsg, sizeof lMsg, &lThisMSGCTRL);
+                if (lResult == SRT_ERROR) {
+                    SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << lResult << " " << srt_getlasterror_str());
+                    mClientListMtx.lock();
+                    auto lCtx = mClientList.find(lThisSocket)->second;
+                    mClientList.erase(mClientList.find(lThisSocket)->first);
+                    srt_epoll_remove_usock(mPollID, lThisSocket);
+                    srt_close(lThisSocket);
+                    mClientListMtx.unlock();
                     if(clientDisconnected) {
-                        clientDisconnected(lCtx, thisSocket);
+                        clientDisconnected(lCtx, lThisSocket);
                     }
-                } else if (result > 0 && receivedData) {
-                    auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
-                    receivedData(pointer, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
-                } else if (result > 0 && receivedDataNoCopy) {
-                    receivedDataNoCopy(msg, result, thisMSGCTRL, clientList.find(thisSocket)->second, thisSocket);
+                } else if (lResult > 0 && receivedData) {
+                    auto pointer = std::make_unique<std::vector<uint8_t>>(lMsg, lMsg + lResult);
+                    receivedData(pointer, lThisMSGCTRL, mClientList.find(lThisSocket)->second, lThisSocket);
+                } else if (lResult > 0 && receivedDataNoCopy) {
+                    receivedDataNoCopy(lMsg, lResult, lThisMSGCTRL, mClientList.find(lThisSocket)->second, lThisSocket);
                 }
             }
-        } else if (ret == -1) {
+        } else if (lRet == -1) {
             SRT_LOGGER(true, LOGG_ERROR, "epoll error: " << srt_getlasterror_str());
         }
 
     }
     SRT_LOGGER(true, LOGG_NOTIFY, "serverEventHandler exit");
-    srt_epoll_release(poll_id);
+    srt_epoll_release(mPollID);
 }
 
 void SRTNet::waitForSRTClient() {
-    int result = SRT_ERROR;
-    poll_id = srt_epoll_create();
-    srt_epoll_set(poll_id, SRT_EPOLL_ENABLE_EMPTY);
+    int lResult = SRT_ERROR;
+    mPollID = srt_epoll_create();
+    srt_epoll_set(mPollID, SRT_EPOLL_ENABLE_EMPTY);
     std::thread(std::bind(&SRTNet::serverEventHandler, this)).detach();
 
-    serverListenThreadActive = true;
+    mServerListenThreadActive = true;
 
     closeAllClientSockets();
 
-    while (serverActive) {
-        struct sockaddr_storage their_addr = {0};
+    while (mServerActive) {
+        struct sockaddr_storage lTheir_addr = {0};
         SRT_LOGGER(true, LOGG_NOTIFY, "SRT Server wait for client");
-        int addr_size = sizeof their_addr;
-        SRTSOCKET newSocketCandidate = srt_accept(context, (struct sockaddr *) &their_addr, &addr_size);
-        if (newSocketCandidate == -1) {
+        int lAddr_size = sizeof lTheir_addr;
+        SRTSOCKET lNewSocketCandidate = srt_accept(mContext, (struct sockaddr *) &lTheir_addr, &lAddr_size);
+        if (lNewSocketCandidate == -1) {
             continue;
         }
-        SRT_LOGGER(true, LOGG_NOTIFY, "Client connected: " << newSocketCandidate);
-        auto ctx = clientConnected(*(struct sockaddr *) &their_addr, newSocketCandidate);
+        SRT_LOGGER(true, LOGG_NOTIFY, "Client connected: " << lNewSocketCandidate);
+        auto lCtx = clientConnected(*(struct sockaddr *) &lTheir_addr, lNewSocketCandidate, mConnectionContext);
 
-        if (ctx) {
-            const int events = SRT_EPOLL_IN | SRT_EPOLL_ERR;
-            clientListMtx.lock();
-            clientList[newSocketCandidate] = ctx;
-            clientListMtx.unlock();
-            result = srt_epoll_add_usock(poll_id, newSocketCandidate, &events);
-            if (result == SRT_ERROR) {
+        if (lCtx) {
+            const int lEvents = SRT_EPOLL_IN | SRT_EPOLL_ERR;
+            mClientListMtx.lock();
+            mClientList[lNewSocketCandidate] = lCtx;
+            mClientListMtx.unlock();
+            lResult = srt_epoll_add_usock(mPollID, lNewSocketCandidate, &lEvents);
+            if (lResult == SRT_ERROR) {
                 SRT_LOGGER(true, LOGG_FATAL, "srt_epoll_add_usock error: " << srt_getlasterror_str());
             }
         } else {
-            close(newSocketCandidate);
+            close(lNewSocketCandidate);
         }
     }
-    serverActive = false;
-    serverListenThreadActive = false;
+    mServerActive = false;
+    mServerListenThreadActive = false;
 }
 
-void SRTNet::getActiveClients(const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)>& function) {
-    clientListMtx.lock();
-    function(clientList);
-    clientListMtx.unlock();
+void SRTNet::getActiveClients(const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)>& rFunction) {
+    mClientListMtx.lock();
+    rFunction(mClientList);
+    mClientListMtx.unlock();
 }
 
 //Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com
 //There is no IP-Version preference if a name is given. the first IP-version found will be used
-bool SRTNet::startClient(std::string host,
-                         uint16_t port,
-                         int reorder,
-                         int32_t latency,
-                         int overhead,
-                         std::shared_ptr<NetworkConnection> &ctx,
-                         int mtu,
-                         std::string psk) {
-    std::lock_guard<std::mutex> lock(netMtx);
-    if (currentMode != Mode::unknown) {
+bool SRTNet::startClient(std::string lHost,
+                         uint16_t lPort,
+                         int lReorder,
+                         int32_t lLatency,
+                         int lOverhead,
+                         std::shared_ptr<NetworkConnection> &rpCtx,
+                         int lMtu,
+                         std::string lPsk) {
+    std::lock_guard<std::mutex> lLock(mNetMtx);
+    if (mCurrentMode != Mode::unknown) {
         SRT_LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
         return false;
     }
 
-    clientContext = ctx;
+    mClientContext = rpCtx;
 
-    int result = 0;
-    int32_t yes = 1;
+    int lResult = 0;
+    int32_t lYes = 1;
     SRT_LOGGER(true, LOGG_NOTIFY, "SRT client startup");
 
-    context = srt_create_socket();
-    if (context == SRT_ERROR) {
+    mContext = srt_create_socket();
+    if (mContext == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_SENDER, &yes, sizeof yes);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_SENDER, &lYes, sizeof lYes);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_SENDER: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_LATENCY, &latency, sizeof latency);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_LATENCY, &lLatency, sizeof lLatency);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LATENCY: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_LOSSMAXTTL, &reorder, sizeof reorder);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_LOSSMAXTTL, &lReorder, sizeof lReorder);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_LOSSMAXTTL: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_OHEADBW, &overhead, sizeof overhead);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_OHEADBW, &lOverhead, sizeof lOverhead);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_OHEADBW: " << srt_getlasterror_str());
         return false;
     }
 
-    result = srt_setsockflag(context, SRTO_PAYLOADSIZE, &mtu, sizeof mtu);
-    if (result == SRT_ERROR) {
+    lResult = srt_setsockflag(mContext, SRTO_PAYLOADSIZE, &lMtu, sizeof lMtu);
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PAYLOADSIZE: " << srt_getlasterror_str());
         return false;
     }
 
-    if (psk.length()) {
+    if (lPsk.length()) {
         int32_t aes128 = 16;
-        result = srt_setsockflag(context, SRTO_PBKEYLEN, &aes128, sizeof aes128);
-        if (result == SRT_ERROR) {
+        lResult = srt_setsockflag(mContext, SRTO_PBKEYLEN, &aes128, sizeof aes128);
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PBKEYLEN: " << srt_getlasterror_str());
             return false;
         }
 
-        result = srt_setsockflag(context, SRTO_PASSPHRASE, psk.c_str(), psk.length());
-        if (result == SRT_ERROR) {
+        lResult = srt_setsockflag(mContext, SRTO_PASSPHRASE, lPsk.c_str(), lPsk.length());
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PASSPHRASE: " << srt_getlasterror_str());
             return false;
         }
     }
 
     //get all addresses for connection
-    struct addrinfo hints = {0};
-    struct addrinfo *svr;
-    struct addrinfo *p;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_protocol = IPPROTO_UDP;
-    hints.ai_family = AF_UNSPEC;
+    struct addrinfo lHints = {0};
+    struct addrinfo *pSvr;
+    struct addrinfo *pHld;
+    lHints.ai_socktype = SOCK_DGRAM;
+    lHints.ai_protocol = IPPROTO_UDP;
+    lHints.ai_family = AF_UNSPEC;
     std::stringstream portAsString;
-    portAsString << port;
-    result = getaddrinfo(host.c_str(), portAsString.str().c_str(), &hints, &svr);
-    if (result) {
+    portAsString << lPort;
+    lResult = getaddrinfo(lHost.c_str(), portAsString.str().c_str(), &lHints, &pSvr);
+    if (lResult) {
         SRT_LOGGER(true, LOGG_FATAL,
-                   "Failed getting the IP target for > " << host << ":" << unsigned(port) << " Errno: "
-                                                         << unsigned(result));
+                   "Failed getting the IP target for > " << lHost << ":" << unsigned(lPort) << " Errno: "
+                                                         << unsigned(lResult));
         return false;
     }
 
     SRT_LOGGER(true, LOGG_NOTIFY, "SRT connect");
-    for (p = svr; p; p = p->ai_next) {
-        result = srt_connect(context, (struct sockaddr *) p->ai_addr, p->ai_addrlen);
-        if (result != SRT_ERROR) {
+    for (pHld = pSvr; pHld; pHld = pHld->ai_next) {
+        lResult = srt_connect(mContext, (struct sockaddr *) pHld->ai_addr, pHld->ai_addrlen);
+        if (lResult != SRT_ERROR) {
             SRT_LOGGER(true, LOGG_NOTIFY, "Connected to SRT Server " << std::endl)
             break;
         }
     }
-    if (result == SRT_ERROR) {
-        srt_close(context);
-        freeaddrinfo(svr);
+    if (lResult == SRT_ERROR) {
+        srt_close(mContext);
+        freeaddrinfo(pSvr);
         SRT_LOGGER(true, LOGG_FATAL, "srt_connect failed " << std::endl)
         return false;
     }
-    freeaddrinfo(svr);
-
-    currentMode = Mode::client;
-    clientActive = true;
+    freeaddrinfo(pSvr);
+    mCurrentMode = Mode::client;
+    mClientActive = true;
     std::thread(std::bind(&SRTNet::clientWorker, this)).detach();
     return true;
 }
 
 void SRTNet::clientWorker() {
-    int result = 0;
-    clientThreadActive = true;
-
-    while (clientActive) {
-        uint8_t msg[2048];
-        SRT_MSGCTRL thisMSGCTRL = srt_msgctrl_default;
-        result = srt_recvmsg2(context, (char *) msg, sizeof msg, &thisMSGCTRL);
-        if (result == SRT_ERROR) {
-            if (clientActive) {
+    int lResult = 0;
+    mClientThreadActive = true;
+    while (mClientActive) {
+        uint8_t lMsg[2048];
+        SRT_MSGCTRL lThisMSGCTRL = srt_msgctrl_default;
+        lResult = srt_recvmsg2(mContext, (char *) lMsg, sizeof lMsg, &lThisMSGCTRL);
+        if (lResult == SRT_ERROR) {
+            if (mClientActive) {
                 SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << srt_getlasterror_str());
             }
             break;
-        } else if (result > 0 && receivedData) {
-            auto pointer = std::make_unique<std::vector<uint8_t>>(msg, msg + result);
-            receivedData(pointer, thisMSGCTRL, clientContext, context);
-        } else if (result > 0 && receivedDataNoCopy) {
-            receivedDataNoCopy(msg, result, thisMSGCTRL, clientContext, context);
+        } else if (lResult > 0 && receivedData) {
+            auto lpData = std::make_unique<std::vector<uint8_t>>(lMsg, lMsg + lResult);
+            receivedData(lpData, lThisMSGCTRL, mClientContext, mContext);
+        } else if (lResult > 0 && receivedDataNoCopy) {
+            receivedDataNoCopy(lMsg, lResult, lThisMSGCTRL, mClientContext, mContext);
         }
     }
-
-    clientActive = false;
-    clientThreadActive = false;
+    mClientActive = false;
+    mClientThreadActive = false;
 }
 
-bool SRTNet::sendData(uint8_t *data, size_t len, SRT_MSGCTRL *msgCtrl, SRTSOCKET targetSystem) {
-    int result;
-    if (currentMode == Mode::client && context && clientActive) {
-        result = srt_sendmsg2(context, (const char *) data, len, msgCtrl);
-    } else if (currentMode == Mode::server && targetSystem && serverActive) {
-        result = srt_sendmsg2(targetSystem, (const char *) data, len, msgCtrl);
+bool SRTNet::sendData(uint8_t *pData, size_t len, SRT_MSGCTRL *pMsgCtrl, SRTSOCKET lTargetSystem) {
+    int lResult;
+
+    if (mCurrentMode == Mode::client && mContext && mClientActive) {
+        lResult = srt_sendmsg2(mContext, (const char *) pData, len, pMsgCtrl);
+    } else if (mCurrentMode == Mode::server && lTargetSystem && mServerActive) {
+        lResult = srt_sendmsg2(lTargetSystem, (const char *) pData, len, pMsgCtrl);
     } else {
         SRT_LOGGER(true, LOGG_ERROR, "Can't send data, the client is not active.");
         return false;
     }
 
-    if (result == SRT_ERROR) {
+    if (lResult == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_ERROR, "srt_sendmsg2 failed: " << srt_getlasterror_str());
         return false;
     }
-    if (result != len) {
+
+    if (lResult != len) {
         SRT_LOGGER(true, LOGG_ERROR, "Failed sending all data");
         return false;
     }
+
     return true;
 }
 
 bool SRTNet::stop() {
-    int result = SRT_ERROR;
-    std::lock_guard<std::mutex> lock(netMtx);
-    if (currentMode == Mode::server) {
-        serverActive = false;
-        if (context) {
-            result = srt_close(context);
-            if (result == SRT_ERROR) {
+    int lResult = SRT_ERROR;
+    std::lock_guard<std::mutex> lLock(mNetMtx);
+    if (mCurrentMode == Mode::server) {
+        mServerActive = false;
+        if (mContext) {
+            lResult = srt_close(mContext);
+            if (lResult == SRT_ERROR) {
                 SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
                 return false;
             }
         }
         closeAllClientSockets();
-        int threadRunning = 1000;
-        while (serverListenThreadActive) {
+        int lThreadRunning = 1000;
+        while (mServerListenThreadActive) {
             std::this_thread::sleep_for(std::chrono::microseconds(1000));
-            if (!--threadRunning) {
+            if (!--lThreadRunning) {
                 SRT_LOGGER(true, LOGG_FATAL,
                            "SRTNet server thread is still running after 1 second. Crash and burn baby!!");
                 break;
             }
         }
         SRT_LOGGER(true, LOGG_NOTIFY, "Server stopped");
-        currentMode = Mode::unknown;
+        mCurrentMode = Mode::unknown;
         return true;
-    } else if (currentMode == Mode::client) {
-        clientActive = false;
-        if (context) {
-            result = srt_close(context);
-            if (result == SRT_ERROR) {
+    } else if (mCurrentMode == Mode::client) {
+        mClientActive = false;
+        if (mContext) {
+            lResult = srt_close(mContext);
+            if (lResult == SRT_ERROR) {
                 SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
                 return false;
             }
         }
 
-        int threadRunning = 1000; //Timeout after 1000ms
-        while (clientThreadActive) {
+        int lThreadRunning = 1000; //Timeout after 1000ms
+        while (mClientThreadActive) {
             std::this_thread::sleep_for(std::chrono::microseconds(1000));
-            if (!--threadRunning) {
+            if (!--lThreadRunning) {
                 SRT_LOGGER(true, LOGG_FATAL,
                            "SRTNet client thread is still running after 1 second. Crash and burn baby!!");
                 break;
             }
         }
         SRT_LOGGER(true, LOGG_NOTIFY, "Client stopped");
-        currentMode = Mode::unknown;
+        mCurrentMode = Mode::unknown;
         return true;
     }
     SRT_LOGGER(true, LOGG_ERROR, "SRTNet nothing to stop");
     return true;
 }
 
-bool SRTNet::getStatistics(SRT_TRACEBSTATS *currentStats, int clear, int instantaneous, SRTSOCKET targetSystem) {
-    std::lock_guard<std::mutex> lock(netMtx);
-    int result;
-    if (currentMode == Mode::client && clientActive && context) {
-        result = srt_bistats(context, currentStats, clear, instantaneous);
-        if (result == SRT_ERROR) {
+bool SRTNet::getStatistics(SRT_TRACEBSTATS *pCurrentStats, int lClear, int lInstantaneous, SRTSOCKET lTargetSystem) {
+    std::lock_guard<std::mutex> lLock(mNetMtx);
+    int lResult = SRT_ERROR;
+    if (mCurrentMode == Mode::client && mClientActive && mContext) {
+        lResult = srt_bistats(mContext, pCurrentStats, lClear, lInstantaneous);
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_ERROR, "srt_bistats failed: " << srt_getlasterror_str());
             return false;
         }
-    } else if (currentMode == Mode::server && serverActive && targetSystem) {
-        result = srt_bistats(targetSystem, currentStats, clear, instantaneous);
-        if (result == SRT_ERROR) {
+    } else if (mCurrentMode == Mode::server && mServerActive && lTargetSystem) {
+        lResult = srt_bistats(lTargetSystem, pCurrentStats, lClear, lInstantaneous);
+        if (lResult == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_ERROR, "srt_bistats failed: " << srt_getlasterror_str());
             return false;
         }
