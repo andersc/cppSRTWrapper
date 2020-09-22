@@ -225,7 +225,7 @@ mySRTNetClient.sendData(buffer2.data(), buffer2.size(), &thisMSGCTRL);
 
 ## Credits
 
-The SRT team for all the help and positive feedback 
+The [SRT](https://github.com/Haivision/srt) team for all the help and positive feedback 
 
 Anders Cedronius for creating the C++ wrapper
 
