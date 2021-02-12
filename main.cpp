@@ -43,8 +43,8 @@ public:
 //**********************************
 
 //Return a connection object. (Return nullptr if you don't want to connect to that client)
-std::shared_ptr<NetworkConnection>
-validateConnection(struct sockaddr &rSin, SRTSOCKET lNewSocket, std::shared_ptr<NetworkConnection> &rpCtx) {
+std::shared_ptr<SRTNet::NetworkConnection>
+validateConnection(struct sockaddr &rSin, SRTSOCKET lNewSocket, std::shared_ptr<SRTNet::NetworkConnection> &rpCtx) {
 
     if (rpCtx != nullptr) {
         auto lConnCls = std::any_cast<std::shared_ptr<ConnectionClass> &>(rpCtx->mObject);
@@ -80,14 +80,14 @@ validateConnection(struct sockaddr &rSin, SRTSOCKET lNewSocket, std::shared_ptr<
         return nullptr;
     }
 
-    auto lNetConn = std::make_shared<NetworkConnection>();
+    auto lNetConn = std::make_shared<SRTNet::NetworkConnection>();
     lNetConn->mObject = std::make_shared<MyClass>(lNewSocket);
     return lNetConn;
 }
 
 //Data callback.
 bool
-handleData(std::unique_ptr<std::vector<uint8_t>> &rContent, SRT_MSGCTRL &rMsgCtrl, std::shared_ptr<NetworkConnection>& rpCtx,
+handleData(std::unique_ptr<std::vector<uint8_t>> &rContent, SRT_MSGCTRL &rMsgCtrl, std::shared_ptr<SRTNet::NetworkConnection>& rpCtx,
            SRTSOCKET lClientHandle) {
 
     //Try catch?
@@ -119,7 +119,7 @@ handleData(std::unique_ptr<std::vector<uint8_t>> &rContent, SRT_MSGCTRL &rMsgCtr
 };
 
 //Client disconnect callback.
-void clientDisconnect(std::shared_ptr<NetworkConnection>& pCtx, SRTSOCKET lClientHandle) {
+void clientDisconnect(std::shared_ptr<SRTNet::NetworkConnection>& pCtx, SRTSOCKET lClientHandle) {
     std::cout << "Client -> " << lClientHandle << " disconnected. (From callback)" << std::endl;
 }
 
@@ -130,7 +130,7 @@ void clientDisconnect(std::shared_ptr<NetworkConnection>& pCtx, SRTSOCKET lClien
 
 //Server sent back data callback.
 void handleDataClient(std::unique_ptr<std::vector<uint8_t>> &rContent, SRT_MSGCTRL &rMsgCtrl,
-                      std::shared_ptr<NetworkConnection> &rpCtx, SRTSOCKET lServerHandle) {
+                      std::shared_ptr<SRTNet::NetworkConnection> &rpCtx, SRTSOCKET lServerHandle) {
 
     std::cout << "Got data ->" << rContent->size() << std::endl;
 
@@ -167,7 +167,7 @@ int main(int argc, const char *argv[]) {
     gSRTNetServer.clientDisconnected = std::bind(&clientDisconnect, std::placeholders::_1, std::placeholders::_2);
 
     //Create a optional connection context
-    auto lConn1 = std::make_shared<NetworkConnection>();
+    auto lConn1 = std::make_shared<SRTNet::NetworkConnection>();
     lConn1->mObject = std::make_shared<ConnectionClass>();
 
     /*Start the server
@@ -185,7 +185,7 @@ int main(int argc, const char *argv[]) {
 
     //The SRT connection is bidirectional and you are able to set different parameters for a particular direction
     //The parameters have the same meaning as for the above server but on the client side.
-    auto lClient1Connection = std::make_shared<NetworkConnection>();
+    auto lClient1Connection = std::make_shared<SRTNet::NetworkConnection>();
     std::shared_ptr<MyClass> lpMyClass1 = std::make_shared<MyClass>(0);
     lpMyClass1->mTest = 1;
     lClient1Connection->mObject = std::move(lpMyClass1);
@@ -198,7 +198,7 @@ int main(int argc, const char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    auto lClient2Connection = std::make_shared<NetworkConnection>();
+    auto lClient2Connection = std::make_shared<SRTNet::NetworkConnection>();
     std::shared_ptr<MyClass> lpMyClass2 = std::make_shared<MyClass>(0);
     lpMyClass2->mTest = 2;
     lClient2Connection->mObject = std::move(lpMyClass2);
@@ -216,7 +216,7 @@ int main(int argc, const char *argv[]) {
     //  std::cout << "The server got " << clients->mClientList->size() << " clients." << std::endl;
     //  clients = nullptr;
 
-    gSRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &clientList) {
+    gSRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> &clientList) {
                                        std::cout << "The server got " << clientList.size() << " client(s)." << std::endl;
                                    }
     );
@@ -271,7 +271,7 @@ int main(int argc, const char *argv[]) {
     //SRT_TRACEBSTATS lCurrentServerStats = {0};
     //mySRTNetServer.getStatistics(&currentServerStats,SRTNetClearStats::yes,SRTNetInstant::no);
 
-    gSRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &rClientList) {
+    gSRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> &rClientList) {
                                        std::cout << "The server got " << rClientList.size() << " clients." << std::endl;
                                    }
     );
@@ -284,7 +284,7 @@ int main(int argc, const char *argv[]) {
     std::cout << "stopClient 2" << std::endl;
     gSRTNetClient2.stop();
 
-    gSRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &clientList) {
+    gSRTNetServer.getActiveClients([](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> &clientList) {
                                        std::cout << "The server got " << clientList.size() << " clients." << std::endl;
                                    }
     );

@@ -43,12 +43,6 @@
 
 #define MAX_WORKERS 20 //Max number of connections to deal with each epoll
 
-//Fill this class with all information you need for the duration of the connection both client and server
-class NetworkConnection {
-public:
-    std::any mObject;
-};
-
 namespace SRTNetClearStats {
     enum SRTNetClearStats : int {
         no,
@@ -63,9 +57,14 @@ namespace SRTNetInstant {
     };
 }
 
-
 class SRTNet {
 public:
+
+    //Fill this class with all information you need for the duration of the connection both client and server
+    class NetworkConnection {
+    public:
+        std::any mObject;
+    };
 
     SRTNet();
 
