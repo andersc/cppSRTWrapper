@@ -82,6 +82,7 @@ bool SRTNet::startServer(std::string lIp, uint16_t lPort, int lReorder, int32_t 
 
     mConnectionContext = pCtx; //retain the optional context
 
+    srt_startup();
     mContext = srt_create_socket();
     if (mContext == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
@@ -291,6 +292,7 @@ bool SRTNet::startClient(std::string lHost,
     int32_t lYes = 1;
     SRT_LOGGER(true, LOGG_NOTIFY, "SRT client startup");
 
+    srt_startup();
     mContext = srt_create_socket();
     if (mContext == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
@@ -450,6 +452,7 @@ bool SRTNet::stop() {
                 break;
             }
         }
+        srt_cleanup();
         SRT_LOGGER(true, LOGG_NOTIFY, "Server stopped");
         mCurrentMode = Mode::unknown;
         return true;
@@ -472,6 +475,7 @@ bool SRTNet::stop() {
                 break;
             }
         }
+        srt_cleanup();
         SRT_LOGGER(true, LOGG_NOTIFY, "Client stopped");
         mCurrentMode = Mode::unknown;
         return true;
