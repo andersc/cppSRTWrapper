@@ -62,4 +62,5 @@ target_link_libraries(srtnet PUBLIC srt ${OPENSSL_LIBRARIES})
 add_executable(cppSRTWrapper main.cpp)
 target_link_libraries(cppSRTWrapper srtnet Threads::Threads)
 
-
+add_executable(srtMinimalBugTest bugtestmain.cpp)
+target_link_libraries(srtMinimalBugTest srtnet Threads::Threads)
