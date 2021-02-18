@@ -155,6 +155,7 @@ void handleDataClient(std::unique_ptr<std::vector<uint8_t>> &rContent, SRT_MSGCT
 
 int main(int argc, const char *argv[]) {
     std::cout << "SRT wrapper start." << std::endl;
+    srt_startup();
 
     bool lRunOnce = true;
     //Register the server callbacks
@@ -289,6 +290,7 @@ int main(int argc, const char *argv[]) {
                                    }
     );
 
+    srt_cleanup();
     std::cout << "SRT wrapper did end." << std::endl;
     return EXIT_SUCCESS;
 }
