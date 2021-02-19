@@ -403,7 +403,7 @@ void SRTNet::clientWorker() {
     mClientThreadActive = false;
 }
 
-bool SRTNet::sendData(uint8_t *pData, size_t len, SRT_MSGCTRL *pMsgCtrl, SRTSOCKET lTargetSystem) {
+bool SRTNet::sendData(const uint8_t *pData, size_t len, SRT_MSGCTRL *pMsgCtrl, SRTSOCKET lTargetSystem) {
     int lResult;
 
     if (mCurrentMode == Mode::client && mContext && mClientActive) {

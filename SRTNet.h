@@ -122,7 +122,7 @@ public:
      * @param lTargetSystem the target sending the data to (used in server mode only)
      * @return true if sendData was able to send the data to the target.
     */
-    bool sendData(uint8_t *pData, size_t lSize, SRT_MSGCTRL *pMsgCtrl, SRTSOCKET lTargetSystem = 0);
+    bool sendData(const uint8_t *pData, size_t lSize, SRT_MSGCTRL *pMsgCtrl, SRTSOCKET lTargetSystem = 0);
 
     /**
      *
