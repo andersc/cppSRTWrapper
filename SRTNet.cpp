@@ -197,15 +197,18 @@ void SRTNet::serverEventHandler() {
                 uint8_t lMsg[2048];
                 SRT_MSGCTRL lThisMSGCTRL = srt_msgctrl_default;
                 SRTSOCKET lThisSocket = lReady[i].fd;
-                int lResult = srt_recvmsg2(lThisSocket, (char *) lMsg, sizeof lMsg, &lThisMSGCTRL);
+                int lResult = srt_recvmsg2(lThisSocket, (char *) lMsg, sizeof(lMsg), &lThisMSGCTRL);
                 if (lResult == SRT_ERROR) {
                     SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << lResult << " " << srt_getlasterror_str());
-                    mClientListMtx.lock();
-                    auto lCtx = mClientList.find(lThisSocket)->second;
+                    std::lock_guard<std::mutex> lLock(mClientListMtx);
+                    auto lIterator = mClientList.find(lThisSocket);
+                    if (lIterator == mClientList.end()) {
+                        continue; // This client has already been removed by closeAllClientSockets()
+                    }
+                    auto lCtx = lIterator->second;
                     mClientList.erase(mClientList.find(lThisSocket)->first);
                     srt_epoll_remove_usock(mPollID, lThisSocket);
                     srt_close(lThisSocket);
-                    mClientListMtx.unlock();
                     if(clientDisconnected) {
                         clientDisconnected(lCtx, lThisSocket);
                     }
