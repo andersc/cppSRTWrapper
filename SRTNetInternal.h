@@ -8,7 +8,7 @@
 #include <iostream>
 #include <sstream>
 
-// GLobal Logger -- Start
+// Global Logger -- Start
 #define LOGG_NOTIFY 1
 #define LOGG_WARN 2
 #define LOGG_ERROR 4

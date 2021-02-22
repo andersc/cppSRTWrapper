@@ -84,8 +84,8 @@ public:
      * @param pCtx optional context used only in the clientConnected callback
      * @return true if server was able to start
     */
-    bool startServer(std::string lIp, uint16_t lPort, int lReorder, int32_t lLatency, int lOverhead, int lMtu,
-                     std::string lPsk = "", std::shared_ptr<NetworkConnection> pCtx = {});
+    bool startServer(const std::string& lIp, uint16_t lPort, int lReorder, int32_t lLatency, int lOverhead, int lMtu,
+                     const std::string& lPsk = "", std::shared_ptr<NetworkConnection> pCtx = {});
 
     /**
      *
@@ -101,8 +101,8 @@ public:
      * @param lPsk Optional Pre Shared Key (AES-128)
      * @return true if client was able to connect to the server
     */
-    bool startClient(std::string lHost, uint16_t lPort, int lReorder, int32_t lLatency, int lOverhead,
-                     std::shared_ptr<NetworkConnection> &rpCtx, int lMtu, std::string lPsk = "");
+    bool startClient(const std::string& lHost, uint16_t lPort, int lReorder, int32_t lLatency, int lOverhead,
+                     std::shared_ptr<NetworkConnection> &rpCtx, int lMtu, const std::string& lPsk = "");
 
     /**
      *
@@ -182,8 +182,8 @@ private:
     void serverEventHandler();
     void clientWorker();
     void closeAllClientSockets();
-    bool isIPv4(const std::string &str);
-    bool isIPv6(const std::string &str);
+    static bool isIPv4(const std::string &str);
+    static bool isIPv6(const std::string &str);
 
     //Server avtive? true == yes
     std::atomic<bool> mServerActive = {false};
