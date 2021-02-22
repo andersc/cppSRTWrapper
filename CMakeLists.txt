@@ -14,6 +14,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
 include(ExternalProject)
 ExternalProject_Add(project_srt
         GIT_REPOSITORY https://github.com/Haivision/srt.git
+        GIT_TAG 6012fdf483e8ddaca53a9f88e34ab5641c549b2a
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
@@ -27,6 +28,7 @@ ExternalProject_Add(project_srt
 
 ExternalProject_Add(project_srt_win
         GIT_REPOSITORY https://github.com/Haivision/srt.git
+        GIT_TAG 6012fdf483e8ddaca53a9f88e34ab5641c549b2a
         UPDATE_COMMAND ""
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
