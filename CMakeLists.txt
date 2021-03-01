@@ -10,6 +10,7 @@ IF( NOT CMAKE_BUILD_TYPE )
 ENDIF()
 
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include(ExternalProject)
 ExternalProject_Add(project_srt
@@ -19,7 +20,7 @@ ExternalProject_Add(project_srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure --CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
-        CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         GIT_PROGRESS 1
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
@@ -33,7 +34,7 @@ ExternalProject_Add(project_srt_win
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DENABLE_STDCXX_SYNC=ON ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
-        CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+        CMAKE_ARGS -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_POSITION_INDEPENDENT_CODE=ON
         GIT_PROGRESS 1
         STEP_TARGETS build
         EXCLUDE_FROM_ALL TRUE
@@ -49,7 +50,7 @@ ELSE()
     add_dependencies(srt project_srt)
 ENDIF()
 
-find_package (Threads REQUIRED)
+find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/)
