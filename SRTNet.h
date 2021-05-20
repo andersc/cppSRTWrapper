@@ -146,7 +146,7 @@ public:
     void
     getActiveClients(const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)> &rFunction);
 
-    ///Callback handling connecting clients
+    ///Callback handling connecting clients (only server mode)
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr &rSin,
                                                      SRTSOCKET lNewSocket, std::shared_ptr<NetworkConnection> &rpCtx)> clientConnected = nullptr;
     ///Callback receiving data type vector
@@ -157,7 +157,7 @@ public:
     std::function<void(const uint8_t *pData, size_t lSize, SRT_MSGCTRL &rMsgCtrl,
                        std::shared_ptr<NetworkConnection> &rCtx, SRTSOCKET lSocket)> receivedDataNoCopy = nullptr;
 
-    ///Callback handling disconnecting clients
+    ///Callback handling disconnecting clients (server and client mode)
     std::function<void(std::shared_ptr<NetworkConnection> &rCtx,
                                                      SRTSOCKET lSocket)> clientDisconnected = nullptr;
 

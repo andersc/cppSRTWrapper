@@ -382,6 +382,9 @@ void SRTNet::clientWorker() {
             if (mClientActive) {
                 SRT_LOGGER(true, LOGG_ERROR, "srt_recvmsg error: " << srt_getlasterror_str());
             }
+            if (clientDisconnected) {
+                clientDisconnected(mClientContext, mContext);
+            }
             break;
         } else if (lResult > 0 && receivedData) {
             auto lpData = std::make_unique<std::vector<uint8_t>>(lMsg, lMsg + lResult);
