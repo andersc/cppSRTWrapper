@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #If no build type is set then force Release
 IF( NOT CMAKE_BUILD_TYPE )
@@ -52,6 +53,7 @@ ENDIF()
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(GTest REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/common)
@@ -62,4 +64,20 @@ target_link_libraries(srtnet PUBLIC srt ${OPENSSL_LIBRARIES})
 add_executable(cppSRTWrapper main.cpp)
 target_link_libraries(cppSRTWrapper srtnet Threads::Threads)
 
+#
+# Build unit tests using GoogleTest
+#
 
+enable_testing()
+
+add_executable(runUnitTests
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/TestSrt.cpp
+)
+target_compile_options(runUnitTests PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-function)
+
+target_include_directories(runUnitTests
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/test
+        PRIVATE ${GTEST_INCLUDE_DIRS})
+
+target_link_libraries(runUnitTests srtnet gtest gtest_main Threads::Threads)

@@ -2,9 +2,9 @@
 
 *Simple C++ wrapper of the [SRT](https://github.com/Haivision/srt) protocol*.
 
-The SRT Protocol is a UDP based protocol. SRT acts as a mix of TCP and UDP where SRT tries to re-send lost data (as TCP would) but only to a dedline in time specified, when the deadline is reached and if the data has not arrived it's marked as lost (as UDP would).
+The SRT Protocol is a UDP based protocol. SRT acts as a mix of TCP and UDP where SRT tries to re-send lost data (as TCP would) but only to a deadline in time specified, when the deadline is reached and if the data has not arrived it's marked as lost (as UDP would).
 
-Streaming media solutions benefit from this approach and SRT is adoppted widly across the media comunity. This C++ wrapper is simplifying implementations of SRT in C++ projects and with only a few lines of code you can create a server and/or a client. 
+Streaming media solutions benefit from this approach and SRT is adopted widely across the media community. This C++ wrapper is simplifying implementations of SRT in C++ projects and with only a few lines of code you can create a server and/or a client. 
 
 The API of SRT has more features than what's exposed in this C++ wrapper, however the base functions exists. If you feel this wrapper is missing any functionalty or features please let me know.
  
@@ -55,7 +55,10 @@ cmake --build . --config Debug
 
 **(source_root)/srt/libsrt.a** (The SRT-lib)
  
-**./cppSRTWrapper** (Runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass.)
+**./cppSRTWrapper** (Runs trough the unit tests and returns
+EXIT_SUCCESS if all unit tests pass.)
+
+**./runUnitTests** (Runs unit tests using GoogleTest)
 
 
 ##Output (Windows): 
@@ -68,9 +71,9 @@ cmake --build . --config Debug
 
 **(source_root)/srt/Debug/srt_static.lib** (The SRT-lib Release build)
  
-**./Release/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass. Release build)
+**./Release/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCCESS if all unit tests pass. Release build)
  
-**./Debug/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCESS if all unit tests pass. Debug build)
+**./Debug/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCCESS if all unit tests pass. Debug build)
 
 
 -

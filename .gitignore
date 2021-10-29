@@ -78,3 +78,4 @@ cmake-build*
 srt
 project_srt-prefix/
 project_srt_win-prefix/
+build/
