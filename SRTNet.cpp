@@ -393,6 +393,15 @@ void SRTNet::clientWorker() {
     mClientActive = false;
 }
 
+
+std::pair<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> SRTNet::getConnectedServer() {
+    if (mCurrentMode == Mode::client) {
+        return {mContext, mClientContext};
+    }
+    return {0, nullptr};
+}
+
+
 bool SRTNet::sendData(const uint8_t* data, size_t len, SRT_MSGCTRL* msgCtrl, SRTSOCKET targetSystem) {
     int result;
 

@@ -14,10 +14,12 @@ TEST(TestSrt, StartStop) {
     SRTNet server;
     SRTNet client;
 
-    auto ctx = std::make_shared<SRTNet::NetworkConnection>();
-    EXPECT_FALSE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, ctx))
+    auto serverCtx = std::make_shared<SRTNet::NetworkConnection>();
+    EXPECT_FALSE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, serverCtx))
         << "Expect to fail without providing clientConnected callback";
-    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, kValidPsk))
+    auto clientCtx = std::make_shared<SRTNet::NetworkConnection>();
+    clientCtx->mObject = 42;
+    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk))
         << "Expect to fail with no server started";
 
     std::condition_variable connectedCondition;
@@ -32,11 +34,13 @@ TEST(TestSrt, StartStop) {
             connected = true;
         }
         connectedCondition.notify_one();
-        return std::make_shared<SRTNet::NetworkConnection>();
+        auto connectionCtx = std::make_shared<SRTNet::NetworkConnection>();
+        connectionCtx->mObject = 1111;
+        return connectionCtx;
     };
 
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, ctx));
-    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
 
     // check for client connecting
     {
@@ -48,8 +52,19 @@ TEST(TestSrt, StartStop) {
     auto nClients = 0;
     server.getActiveClients([&](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>>& activeClients) {
         nClients = activeClients.size();
+        for (const auto& socketNetworkConnectionPair : activeClients) {
+            int32_t number = 0;
+            EXPECT_NO_THROW(number = std::any_cast<int32_t>(socketNetworkConnectionPair.second->mObject));
+            EXPECT_EQ(number, 1111);
+        }
     });
     EXPECT_EQ(nClients, 1);
+
+    auto [srtSocket, networkConnection] = client.getConnectedServer();
+    EXPECT_NE(networkConnection, nullptr);
+    int32_t number = 0;
+    EXPECT_NO_THROW(number = std::any_cast<int32_t>(networkConnection->mObject));
+    EXPECT_EQ(number, 42);
 
     // notice when client disconnects
     std::condition_variable disconnectCondition;
@@ -74,7 +89,7 @@ TEST(TestSrt, StartStop) {
     // start a new client and stop the server
     connected = false;
     SRTNet client2;
-    ASSERT_TRUE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
     // check for client connecting
     {
         std::unique_lock<std::mutex> lock(connectedMutex);
@@ -264,6 +279,9 @@ TEST(TestSrt, DISABLED_RejectConnection) {
         nClients = activeClients.size();
     });
     EXPECT_EQ(nClients, 0);
+
+    auto [srtSocket, networkConnection] = client.getConnectedServer();
+    EXPECT_EQ(networkConnection, nullptr);
 
     std::condition_variable receiveCondition;
     std::mutex receiveMutex;

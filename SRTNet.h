@@ -139,6 +139,18 @@ public:
     void
     getActiveClients(const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>>&)>& function);
 
+    /**
+     *
+     * @brief Get the SRT socket and the network connection context object associated with the connected server. This method
+     * only works when in client mode.
+     * @returns The SRT socket and network connection context of the connected server in case this SRTNet is in client
+     * mode and is connected to a SRT server. Returns {0, nullptr} if not in client mode or if in client mode and not
+     * connected yet.
+     *
+    */
+    std::pair<SRTSOCKET, std::shared_ptr<NetworkConnection>> getConnectedServer();
+
+
     ///Callback handling connecting clients (only server mode)
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr& sin, SRTSOCKET newSocket,
                                                     std::shared_ptr<NetworkConnection>& ctx)> clientConnected = nullptr;
