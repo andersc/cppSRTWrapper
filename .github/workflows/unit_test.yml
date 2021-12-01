@@ -1,0 +1,50 @@
+name: unit_tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test-release:
+
+    runs-on: tobbe-nuc-stardom
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: CMake set-up for release
+        run: |
+          rm -rf build
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+      - name: Build release
+        run: |
+          cd build
+          make runUnitTests
+      - name: Run tests with release
+        run: |
+          cd build
+          ./runUnitTests
+
+  test-debug:
+
+    runs-on: tobbe-nuc-stardom
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: CMake set-up for debug
+        run: |
+          rm -rf build
+          mkdir build
+          cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug ..
+      - name: Build debug
+        run: |
+          cd build
+          make runUnitTests
+      - name: Run tests with debug
+        run: |
+          cd build
+          ./runUnitTests
