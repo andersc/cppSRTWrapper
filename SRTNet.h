@@ -18,6 +18,7 @@
 #include <utility>
 #include <cstdlib>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <any>
 #include "srt/srtcore/srt.h"
