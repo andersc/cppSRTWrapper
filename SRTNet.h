@@ -27,6 +27,7 @@
 #include <map>
 #include <mutex>
 #include <any>
+#include <memory>
 #include "srt/srtcore/srt.h"
 
 #ifdef WIN32
