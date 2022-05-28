@@ -14,7 +14,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: CMake set-up
-      run: cmake -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl@1.1/ .
+      run: |
+        export env.OPENSSL_ROOT_DIR=$(brew --prefix openssl)
+        export env.OPENSSL_LIB_DIR=$(brew --prefix openssl)"/lib"
+        export env.OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)"/include"
+        cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
       run: cmake --build .
     - uses: actions/upload-artifact@v2
