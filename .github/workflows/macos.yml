@@ -18,6 +18,9 @@ jobs:
         echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
         echo "OPENSSL_LIB_DIR=$(brew --prefix openssl)\"/lib\"" >> $GITHUB_ENV
         echo "OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)\"/include\"" >> $GITHUB_ENV
+        echo "${{ env.OPENSSL_ROOT_DIR }}" 
+        echo "${{ env.OPENSSL_LIB_DIR }}" 
+        echo "${{ env.OPENSSL_INCLUDE_DIR }}" 
         cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
       run: cmake --build .
