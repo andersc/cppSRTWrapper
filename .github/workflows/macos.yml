@@ -15,9 +15,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: CMake set-up
       run: |
-        export env.OPENSSL_ROOT_DIR=$(brew --prefix openssl)
-        export env.OPENSSL_LIB_DIR=$(brew --prefix openssl)"/lib"
-        export env.OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)"/include"
+        echo "OPENSSL_ROOT_DIR=$(brew --prefix openssl)" >> $GITHUB_ENV
+        echo "OPENSSL_LIB_DIR=$(brew --prefix openssl)\"/lib\"" >> $GITHUB_ENV
+        echo "OPENSSL_INCLUDE_DIR=$(brew --prefix openssl)\"/include\"" >> $GITHUB_ENV
         cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
       run: cmake --build .
