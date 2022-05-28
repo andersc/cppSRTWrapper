@@ -2,8 +2,7 @@
 // Created by Anders Cedronius on 2019-04-22.
 //
 
-#ifndef CPPSRTWRAPPER_SRTGLOBALHANDLER_H
-#define CPPSRTWRAPPER_SRTGLOBALHANDLER_H
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -34,4 +33,3 @@ std::cout << a.str(); \
 #endif
 // GLobal Logger -- End
 
-#endif //CPPSRTWRAPPER_SRTGLOBALHANDLER_H

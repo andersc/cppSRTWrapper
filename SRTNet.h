@@ -14,8 +14,7 @@
 // h part of header
 // l local scope
 
-#ifndef CPPSRTWRAPPER_SRTNET_H
-#define CPPSRTWRAPPER_SRTNET_H
+#pragma once
 
 #include <iostream>
 #include <functional>
@@ -205,5 +204,3 @@ private:
     std::shared_ptr<NetworkConnection> mConnectionContext = nullptr;
 };
 
-
-#endif //CPPSRTWRAPPER_SRTNET_H

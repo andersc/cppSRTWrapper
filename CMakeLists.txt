@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
+
 #If no build type is set then force Release
 IF( NOT CMAKE_BUILD_TYPE )
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING
@@ -9,7 +12,10 @@ IF( NOT CMAKE_BUILD_TYPE )
             FORCE)
 ENDIF()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+IF( CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DDEBUG")
+ENDIF()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 include(ExternalProject)
@@ -49,9 +55,6 @@ ELSE()
     set_property(TARGET srt PROPERTY IMPORTED_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/srt/libsrt.a)
     add_dependencies(srt project_srt)
 ENDIF()
-
-find_package(Threads REQUIRED)
-find_package(OpenSSL REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/srt/common)
