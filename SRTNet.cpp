@@ -45,7 +45,7 @@ bool SRTNet::isIPv6(const std::string &str) {
 }
 
 bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu,
-                         const std::string& psk, std::shared_ptr<NetworkConnection> ctx) {
+                         const std::string& psk, bool singleSender, std::shared_ptr<NetworkConnection> ctx) {
 
     struct sockaddr_in saV4 = {0};
     struct sockaddr_in6 saV6 = {0};
@@ -171,7 +171,7 @@ bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int3
     }
     mServerActive = true;
     mCurrentMode = Mode::server;
-    mWorkerThread = std::thread(&SRTNet::waitForSRTClient, this);
+    mWorkerThread = std::thread(&SRTNet::waitForSRTClient, this, singleSender);
     return true;
 }
 
@@ -222,7 +222,7 @@ void SRTNet::serverEventHandler() {
     srt_epoll_release(mPollID);
 }
 
-void SRTNet::waitForSRTClient() {
+void SRTNet::waitForSRTClient(bool singleSender) {
     int result = SRT_ERROR;
     mPollID = srt_epoll_create();
     srt_epoll_set(mPollID, SRT_EPOLL_ENABLE_EMPTY);
@@ -248,6 +248,14 @@ void SRTNet::waitForSRTClient() {
             result = srt_epoll_add_usock(mPollID, newSocketCandidate, &events);
             if (result == SRT_ERROR) {
                 SRT_LOGGER(true, LOGG_FATAL, "srt_epoll_add_usock error: " << srt_getlasterror_str());
+            }
+
+            if (singleSender) {
+                int result = srt_close(mContext);
+                if (result == SRT_ERROR) {
+                    SRT_LOGGER(true, LOGG_ERROR, "srt_close failed: " << srt_getlasterror_str());
+                }
+                break;
             }
         } else {
             close(newSocketCandidate);

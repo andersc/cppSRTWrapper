@@ -75,11 +75,12 @@ public:
      * @param overhead % extra of the BW that will be allowed for re-transmission packets
      * @param mtu sets the MTU
      * @param psk Optional Pre Shared Key (AES-128)
+     * @param singleSender set to true to accept just one sender to connect to the server
      * @param ctx optional context used only in the clientConnected callback
      * @return true if server was able to start
     */
     bool startServer(const std::string& ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu,
-                     const std::string& psk = "", std::shared_ptr<NetworkConnection> ctx = {});
+                     const std::string& psk = "", bool singleSender = false, std::shared_ptr<NetworkConnection> ctx = {});
 
     /**
      *
@@ -184,7 +185,7 @@ private:
         client
     };
 
-    void waitForSRTClient();
+    void waitForSRTClient(bool singleSender);
     void serverEventHandler();
     void clientWorker();
     void closeAllClientSockets();
