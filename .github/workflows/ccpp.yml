@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install
-      run: sudo apt -y install tclsh pkg-config libssl-dev
+      run: sudo apt -y install tclsh pkg-config libssl-dev libgtest-dev
     - name: cmake
       run: cmake -DCMAKE_BUILD_TYPE=Release .
     - name: make
@@ -22,8 +22,3 @@ jobs:
       with:
         name: libsrt_linux
         path: ./srt/libsrt.a
-      
-
-
-
-
