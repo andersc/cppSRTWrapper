@@ -368,5 +368,15 @@ TEST(TestSrt, SingleSender) {
     SRTNet client2;
     ASSERT_FALSE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
 
+    server.getActiveClients([&](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>>& activeClients) {
+        nClients = activeClients.size();
+        for (const auto& socketNetworkConnectionPair : activeClients) {
+            int32_t number = 0;
+            EXPECT_NO_THROW(number = std::any_cast<int32_t>(socketNetworkConnectionPair.second->mObject));
+            EXPECT_EQ(number, 1111);
+        }
+    });
+    EXPECT_EQ(nClients, 1);
+
     EXPECT_TRUE(server.stop());
 }

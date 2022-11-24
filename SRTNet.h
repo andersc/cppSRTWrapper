@@ -75,7 +75,7 @@ public:
      * @param overhead % extra of the BW that will be allowed for re-transmission packets
      * @param mtu sets the MTU
      * @param psk Optional Pre Shared Key (AES-128)
-     * @param singleSender set to true to accept just one sender to connect to the server
+     * @param singleSender set to true to accept just one sender to connect to the server, otherwise the server will keep waiting and accepting more incoming sender connections
      * @param ctx optional context used only in the clientConnected callback
      * @return true if server was able to start
     */
