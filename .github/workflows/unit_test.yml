@@ -9,7 +9,7 @@ on:
 jobs:
   test-release:
 
-    runs-on: tobbe-nuc-stardom
+    runs-on: stardom-nuc
 
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
 
   test-debug:
 
-    runs-on: tobbe-nuc-stardom
+    runs-on: stardom-nuc
 
     steps:
       - uses: actions/checkout@v2

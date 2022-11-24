@@ -179,7 +179,7 @@ int main(int argc, const char *argv[]) {
      * overhead: The % overhead tolerated for retransmits relative the original data stream.
      * mtu: max 1456
      */
-    if (!gSRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100, 1456, "Th1$_is_4_0pt10N4L_P$k", lConn1)) {
+    if (!gSRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100, 1456, "Th1$_is_4_0pt10N4L_P$k", false, lConn1)) {
         std::cout << "SRT Server failed to start." << std::endl;
         return EXIT_FAILURE;
     }
