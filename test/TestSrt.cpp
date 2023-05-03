@@ -214,6 +214,7 @@ TEST(TestSrt, SendReceive) {
 
     // verify that sending to a stopped client fails
     ASSERT_TRUE(client.stop());
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     SRT_MSGCTRL msgSendCtrl = srt_msgctrl_default;
     EXPECT_FALSE(server.sendData(sendBuffer.data(), sendBuffer.size(), &msgSendCtrl, clientSocket));
 }
