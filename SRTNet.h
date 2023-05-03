@@ -54,6 +54,12 @@ namespace SRTNetInstant {
 class SRTNet {
 public:
 
+    enum class Mode {
+        unknown,
+        server,
+        client
+    };
+
     //Fill this class with all information you need for the duration of the connection both client and server
     class NetworkConnection {
     public:
@@ -152,6 +158,14 @@ public:
     */
     std::pair<SRTSOCKET, std::shared_ptr<NetworkConnection>> getConnectedServer();
 
+    /**
+     *
+     * @brief Get the current operating mode.
+     * @returns The operating mode.
+     *
+    */
+    Mode getCurrentMode() const;
+
 
     ///Callback handling connecting clients (only server mode)
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr& sin, SRTSOCKET newSocket,
@@ -179,12 +193,6 @@ private:
 
     //Internal variables and methods
 
-    enum class Mode {
-        unknown,
-        server,
-        client
-    };
-
     void waitForSRTClient(bool singleSender);
     void serverEventHandler();
     void clientWorker();
@@ -202,7 +210,7 @@ private:
 
     SRTSOCKET mContext = 0;
     int mPollID = 0;
-    std::mutex mNetMtx;
+    mutable std::mutex mNetMtx;
     Mode mCurrentMode = Mode::unknown;
     std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> mClientList = {};
     std::mutex mClientListMtx;
