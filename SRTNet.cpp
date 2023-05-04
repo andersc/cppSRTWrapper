@@ -410,6 +410,11 @@ std::pair<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> SRTNet::getConn
 }
 
 
+SRTNet::Mode SRTNet::getCurrentMode() const {
+    std::lock_guard<std::mutex> lock(mNetMtx);
+    return mCurrentMode;
+}
+
 bool SRTNet::sendData(const uint8_t* data, size_t len, SRT_MSGCTRL* msgCtrl, SRTSOCKET targetSystem) {
     int result;
 
