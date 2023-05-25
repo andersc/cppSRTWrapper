@@ -16,7 +16,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(ExternalProject)
 ExternalProject_Add(project_srt
         GIT_REPOSITORY https://github.com/Haivision/srt.git
-        GIT_TAG v1.5.1
+        #  We use the git commit hash because it is faster
+        GIT_TAG 0bc3b03202b3159fc9b085b3ae6d66ec071c25d6 # v1.5.1
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/srt/configure --CMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}

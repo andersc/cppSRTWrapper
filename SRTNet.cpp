@@ -8,10 +8,68 @@
 //
 
 #include "SRTNet.h"
+
+#include <optional>
+
 #include "SRTNetInternal.h"
 
+namespace {
+
+/// Wrapper around sockaddr_in
+class SocketAddress {
+public:
+    SocketAddress(const std::string& ip, uint16_t port)
+        : mIP(ip)
+        , mPort(port) {
+    }
+
+    ///
+    /// @return True if this SocketAddress is an IPv4 address
+    bool isIPv4() {
+        sockaddr_in sa{};
+        return inet_pton(AF_INET, mIP.c_str(), &sa.sin_addr) != 0;
+    }
+
+    ///
+    /// @return True if this SocketAddress is an IPv6 address
+    bool isIPv6() {
+        sockaddr_in6 sa{};
+        return inet_pton(AF_INET6, mIP.c_str(), &sa.sin6_addr) != 0;
+    }
+
+    ///
+    /// @return Get this address as an IPv4 sockaddr_in, nullopt if not a valid IPv4 address
+    [[nodiscard]] std::optional<sockaddr_in> getIPv4() const {
+        sockaddr_in socketAddressV4 = {0};
+        socketAddressV4.sin_family = AF_INET;
+        socketAddressV4.sin_port = htons(mPort);
+        if (inet_pton(AF_INET, mIP.c_str(), &socketAddressV4.sin_addr) != 1) {
+            return std::nullopt;
+        }
+        return socketAddressV4;
+    }
+
+    ///
+    /// @return Get this address as an IPv6 sockaddr_in6, nullopt if not a valid IPv6 address
+    [[nodiscard]] std::optional<sockaddr_in6> getIPv6() const {
+        sockaddr_in6 socketAddressV6 = {0};
+        socketAddressV6.sin6_family = AF_INET6;
+        socketAddressV6.sin6_port = htons(mPort);
+        if (inet_pton(AF_INET6, mIP.c_str(), &socketAddressV6.sin6_addr) != 1) {
+            return std::nullopt;
+        }
+        return socketAddressV6;
+    }
+
+private:
+    std::string mIP;
+    uint16_t mPort;
+};
+
+} // namespace
+
 SRTNet::SRTNet() {
-    SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet constructed")
+    SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet constructed");
 }
 
 SRTNet::~SRTNet() {
@@ -21,10 +79,10 @@ SRTNet::~SRTNet() {
 
 void SRTNet::closeAllClientSockets() {
     std::lock_guard<std::mutex> lock(mClientListMtx);
-    for (auto &client: mClientList) {
+    for (auto& client : mClientList) {
         SRTSOCKET socket = client.first;
         int result = srt_close(socket);
-        if(clientDisconnected) {
+        if (clientDisconnected) {
             clientDisconnected(client.second, socket);
         }
         if (result == SRT_ERROR) {
@@ -34,35 +92,27 @@ void SRTNet::closeAllClientSockets() {
     mClientList.clear();
 }
 
-bool SRTNet::isIPv4(const std::string &str) {
-    struct sockaddr_in sa = {0};
-    return inet_pton(AF_INET, str.c_str(), &sa.sin_addr) != 0;
-}
-
-bool SRTNet::isIPv6(const std::string &str) {
-    struct sockaddr_in6 sa = {0};
-    return inet_pton(AF_INET6, str.c_str(), &sa.sin6_addr) != 0;
-}
-
-bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int32_t latency, int overhead, int mtu,
-                         const std::string& psk, bool singleSender, std::shared_ptr<NetworkConnection> ctx) {
-
-    struct sockaddr_in saV4 = {0};
-    struct sockaddr_in6 saV6 = {0};
-
-    int ipType = AF_INET;
-    if (isIPv4(ip)) {
-        ipType = AF_INET;
-    } else if (isIPv6(ip)) {
-        ipType = AF_INET6;
-    } else {
-        SRT_LOGGER(true, LOGG_ERROR, " " << "Provided IP-Address not valid.");
-    }
-
+bool SRTNet::startServer(const std::string& ip,
+                         uint16_t port,
+                         int reorder,
+                         int32_t latency,
+                         int overhead,
+                         int mtu,
+                         const std::string& psk,
+                         bool singleSender,
+                         std::shared_ptr<NetworkConnection> ctx) {
     std::lock_guard<std::mutex> lock(mNetMtx);
 
+    SocketAddress socketAddress(ip, port);
+    if (!socketAddress.isIPv4() && !socketAddress.isIPv6()) {
+        SRT_LOGGER(true, LOGG_ERROR, "Failed to parse socket address");
+        return false;
+    }
+
     if (mCurrentMode != Mode::unknown) {
-        SRT_LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
+        SRT_LOGGER(true, LOGG_ERROR,
+                   " "
+                       << "SRTNet mode is already set");
         return false;
     }
 
@@ -71,32 +121,12 @@ bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int3
         return false;
     }
 
-    mConnectionContext = ctx; //retain the optional context
+    mConnectionContext = ctx; // retain the optional context
 
     mContext = srt_create_socket();
     if (mContext == SRT_ERROR) {
         SRT_LOGGER(true, LOGG_FATAL, "srt_socket: " << srt_getlasterror_str());
         return false;
-    }
-
-    if (ipType == AF_INET) {
-        saV4.sin_family = AF_INET;
-        saV4.sin_port = htons(port);
-        if (inet_pton(AF_INET, ip.c_str(), &saV4.sin_addr) != 1) {
-            SRT_LOGGER(true, LOGG_FATAL, "inet_pton failed ");
-            srt_close(mContext);
-            return false;
-        }
-    }
-
-    if (ipType == AF_INET6) {
-        saV6.sin6_family = AF_INET6;
-        saV6.sin6_port = htons(port);
-        if (inet_pton(AF_INET6, ip.c_str(), &saV6.sin6_addr) != 1) {
-            SRT_LOGGER(true, LOGG_FATAL, "inet_pton failed ");
-            srt_close(mContext);
-            return false;
-        }
     }
 
     int32_t yes = 1;
@@ -145,8 +175,9 @@ bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int3
         }
     }
 
-    if (ipType == AF_INET) {
-        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&saV4), sizeof(saV4));
+    std::optional<sockaddr_in> ipv4Address = socketAddress.getIPv4();
+    if (ipv4Address.has_value()) {
+        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&ipv4Address.value()), sizeof(ipv4Address.value()));
         if (result == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
             srt_close(mContext);
@@ -154,8 +185,9 @@ bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int3
         }
     }
 
-    if (ipType == AF_INET6) {
-        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&saV6), sizeof(saV6));
+    std::optional<sockaddr_in6> ipv6Address = socketAddress.getIPv6();
+    if (ipv6Address.has_value()) {
+        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&ipv6Address.value()), sizeof(ipv6Address.value()));
         if (result == SRT_ERROR) {
             SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
             srt_close(mContext);
@@ -174,7 +206,6 @@ bool SRTNet::startServer(const std::string& ip, uint16_t port, int reorder, int3
     mWorkerThread = std::thread(&SRTNet::waitForSRTClient, this, singleSender);
     return true;
 }
-
 
 void SRTNet::serverEventHandler() {
     SRT_EPOLL_EVENT ready[MAX_WORKERS];
@@ -202,7 +233,7 @@ void SRTNet::serverEventHandler() {
                     mClientList.erase(iterator->first);
                     srt_epoll_remove_usock(mPollID, thisSocket);
                     srt_close(thisSocket);
-                    if(clientDisconnected) {
+                    if (clientDisconnected) {
                         clientDisconnected(ctx, thisSocket);
                     }
                 } else if (result > 0 && receivedData) {
@@ -215,7 +246,6 @@ void SRTNet::serverEventHandler() {
         } else if (ret == -1) {
             SRT_LOGGER(true, LOGG_ERROR, "epoll error: " << srt_getlasterror_str());
         }
-
     }
     SRT_LOGGER(true, LOGG_NOTIFY, "serverEventHandler exit");
 
@@ -263,24 +293,40 @@ void SRTNet::waitForSRTClient(bool singleSender) {
     }
 }
 
-void SRTNet::getActiveClients(const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>> &)>& function) {
+void SRTNet::getActiveClients(
+    const std::function<void(std::map<SRTSOCKET, std::shared_ptr<NetworkConnection>>&)>& function) {
     std::lock_guard<std::mutex> lock(mClientListMtx);
     function(mClientList);
 }
 
-//Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com
-//There is no IP-Version preference if a name is given. the first IP-version found will be used
 bool SRTNet::startClient(const std::string& host,
                          uint16_t port,
                          int reorder,
                          int32_t latency,
                          int overhead,
-                         std::shared_ptr<NetworkConnection> &ctx,
+                         std::shared_ptr<NetworkConnection>& ctx,
+                         int mtu,
+                         const std::string& psk) {
+    return startClient(host, port, "0.0.0.0", 0, reorder, latency, overhead, ctx, mtu, psk);
+}
+
+// Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com
+// There is no IP-Version preference if a name is given. the first IP-version found will be used
+bool SRTNet::startClient(const std::string& host,
+                         uint16_t port,
+                         const std::string& localHost,
+                         uint16_t localPort,
+                         int reorder,
+                         int32_t latency,
+                         int overhead,
+                         std::shared_ptr<NetworkConnection>& ctx,
                          int mtu,
                          const std::string& psk) {
     std::lock_guard<std::mutex> lock(mNetMtx);
     if (mCurrentMode != Mode::unknown) {
-        SRT_LOGGER(true, LOGG_ERROR, " " << "SRTNet mode is already set");
+        SRT_LOGGER(true, LOGG_ERROR,
+                   " "
+                       << "SRTNet mode is already set");
         return false;
     }
 
@@ -341,7 +387,38 @@ bool SRTNet::startClient(const std::string& host,
         }
     }
 
-    //get all addresses for connection
+    // Set local interface to bind to
+    SocketAddress localSocketAddress(localHost, localPort);
+
+    std::optional<sockaddr_in> localIPv4Address = localSocketAddress.getIPv4();
+    if (localIPv4Address.has_value()) {
+        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&localIPv4Address.value()),
+                          sizeof(localIPv4Address.value()));
+        if (result == SRT_ERROR) {
+            SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+            srt_close(mContext);
+            return false;
+        }
+    }
+
+    std::optional<sockaddr_in6> localIPv6Address = localSocketAddress.getIPv6();
+    if (localIPv6Address.has_value()) {
+        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&localIPv6Address.value()),
+                          sizeof(localIPv6Address.value()));
+        if (result == SRT_ERROR) {
+            SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+            srt_close(mContext);
+            return false;
+        }
+    }
+
+    if (!localIPv4Address.has_value() && !localIPv6Address.has_value()) {
+        SRT_LOGGER(true, LOGG_FATAL, "Failed to parse local socket address");
+        srt_close(mContext);
+        return false;
+    }
+
+    // Get all remote addresses for connection
     struct addrinfo hints = {0};
     struct addrinfo* svr;
     struct addrinfo* hld;
@@ -401,7 +478,6 @@ void SRTNet::clientWorker() {
     mClientActive = false;
 }
 
-
 std::pair<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> SRTNet::getConnectedServer() {
     if (mCurrentMode == Mode::client) {
         return {mContext, mClientContext};
@@ -409,6 +485,9 @@ std::pair<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>> SRTNet::getConn
     return {0, nullptr};
 }
 
+SRTSOCKET SRTNet::getBoundSocket() const {
+    return mContext;
+}
 
 SRTNet::Mode SRTNet::getCurrentMode() const {
     std::lock_guard<std::mutex> lock(mNetMtx);
@@ -419,9 +498,9 @@ bool SRTNet::sendData(const uint8_t* data, size_t len, SRT_MSGCTRL* msgCtrl, SRT
     int result;
 
     if (mCurrentMode == Mode::client && mContext && mClientActive) {
-        result = srt_sendmsg2(mContext, reinterpret_cast<const char *>(data), len, msgCtrl);
+        result = srt_sendmsg2(mContext, reinterpret_cast<const char*>(data), len, msgCtrl);
     } else if (mCurrentMode == Mode::server && targetSystem && mServerActive) {
-        result = srt_sendmsg2(targetSystem, reinterpret_cast<const char *>(data), len, msgCtrl);
+        result = srt_sendmsg2(targetSystem, reinterpret_cast<const char*>(data), len, msgCtrl);
     } else {
         SRT_LOGGER(true, LOGG_WARN, "Can't send data, the client is not active.");
         return false;

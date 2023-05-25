@@ -10,6 +10,52 @@ std::string kInvalidPsk = "Th1$_is_4_F4k3_P$k";
 
 size_t kMaxMessageSize = SRT_LIVE_MAX_PLSIZE;
 
+namespace {
+///
+/// @brief Get the bind IP address and port of an SRT socket
+/// @param socket The SRT socket to get the bind IP and Port from
+/// @return The bind IP address and port of the SRT socket
+std::pair<std::string, uint16_t> getBindIpAndPortFromSRTSocket(SRTSOCKET socket) {
+    sockaddr_storage address{};
+    int32_t addressSize = sizeof(decltype(address));
+    EXPECT_EQ(srt_getsockname(socket, reinterpret_cast<sockaddr*>(&address), &addressSize), 0);
+    if (address.ss_family == AF_INET) {
+        const sockaddr_in* socketAddressV4 = reinterpret_cast<const sockaddr_in*>(&address);
+        char ipv4Address[INET_ADDRSTRLEN];
+        EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV4->sin_addr), ipv4Address, INET_ADDRSTRLEN), nullptr);
+        return {ipv4Address, ntohs(socketAddressV4->sin_port)};
+    } else if (address.ss_family == AF_INET6) {
+        const sockaddr_in6* socketAddressV6 = reinterpret_cast<const sockaddr_in6*>(&address);
+        char ipv6Address[INET6_ADDRSTRLEN];
+        EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV6->sin6_addr), ipv6Address, INET6_ADDRSTRLEN), nullptr);
+        return {ipv6Address, ntohs(socketAddressV6->sin6_port)};
+    }
+    return {"Unsupported", 0};
+}
+
+///
+/// @brief Get the remote peer IP address and port of an SRT socket
+/// @param socket The SRT socket to get the peer IP and Port from
+/// @return The peer IP address and port of the SRT socket
+std::pair<std::string, uint16_t> getPeerIpAndPortFromSRTSocket(SRTSOCKET socket) {
+    sockaddr_storage address{};
+    int32_t addressSize = sizeof(decltype(address));
+    EXPECT_EQ(srt_getpeername(socket, reinterpret_cast<sockaddr*>(&address), &addressSize), 0);
+    if (address.ss_family == AF_INET) {
+        const sockaddr_in* socketAddressV4 = reinterpret_cast<const sockaddr_in*>(&address);
+        char ipv4Address[INET_ADDRSTRLEN];
+        EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV4->sin_addr), ipv4Address, INET_ADDRSTRLEN), nullptr);
+        return {ipv4Address, ntohs(socketAddressV4->sin_port)};
+    } else if (address.ss_family == AF_INET6) {
+        const sockaddr_in6* socketAddressV6 = reinterpret_cast<const sockaddr_in6*>(&address);
+        char ipv6Address[INET6_ADDRSTRLEN];
+        EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV6->sin6_addr), ipv6Address, INET6_ADDRSTRLEN), nullptr);
+        return {ipv6Address, ntohs(socketAddressV6->sin6_port)};
+    }
+    return {"Unsupported", 0};
+}
+} // namespace
+
 TEST(TestSrt, StartStop) {
     SRTNet server;
     SRTNet client;
@@ -380,4 +426,132 @@ TEST(TestSrt, SingleSender) {
     EXPECT_EQ(nClients, 1);
 
     EXPECT_TRUE(server.stop());
+}
+
+TEST(TestSrt, BindAddressForCaller) {
+    SRTNet server;
+    SRTNet client;
+
+    auto serverCtx = std::make_shared<SRTNet::NetworkConnection>();
+    auto clientCtx = std::make_shared<SRTNet::NetworkConnection>();
+    clientCtx->mObject = 42;
+
+    std::condition_variable connectedCondition;
+    std::mutex connectedMutex;
+    bool connected = false;
+
+    // notice when client connects to server
+    server.clientConnected = [&](struct sockaddr& sin, SRTSOCKET newSocket,
+                                 std::shared_ptr<SRTNet::NetworkConnection>& ctx) {
+        {
+            std::lock_guard<std::mutex> lock(connectedMutex);
+            connected = true;
+        }
+        connectedCondition.notify_one();
+        auto connectionCtx = std::make_shared<SRTNet::NetworkConnection>();
+        connectionCtx->mObject = 1111;
+        return connectionCtx;
+    };
+
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8010, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8010, "0.0.0.0", 8011, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE,
+                                   kValidPsk));
+
+    // check for client connecting
+    {
+        std::unique_lock<std::mutex> lock(connectedMutex);
+        bool successfulWait = connectedCondition.wait_for(lock, std::chrono::seconds(2), [&]() { return connected; });
+        ASSERT_TRUE(successfulWait) << "Timeout waiting for client to connect";
+    }
+
+    size_t nClients = 0;
+    server.getActiveClients([&](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>>& activeClients) {
+        nClients = activeClients.size();
+        for (const auto& socketNetworkConnectionPair : activeClients) {
+            std::pair<std::string, uint16_t> peerIPAndPort =
+                getPeerIpAndPortFromSRTSocket(socketNetworkConnectionPair.first);
+            EXPECT_EQ(peerIPAndPort.first, "127.0.0.1");
+            EXPECT_EQ(peerIPAndPort.second, 8011);
+
+            std::pair<std::string, uint16_t> ipAndPort =
+                getBindIpAndPortFromSRTSocket(socketNetworkConnectionPair.first);
+            EXPECT_EQ(ipAndPort.first, "127.0.0.1");
+            EXPECT_EQ(ipAndPort.second, 8010);
+        }
+    });
+    EXPECT_EQ(nClients, 1);
+
+    std::pair<std::string, uint16_t> serverIPAndPort = getBindIpAndPortFromSRTSocket(server.getBoundSocket());
+    EXPECT_EQ(serverIPAndPort.first, "127.0.0.1");
+    EXPECT_EQ(serverIPAndPort.second, 8010);
+
+    std::pair<std::string, uint16_t> clientIPAndPort = getBindIpAndPortFromSRTSocket(client.getBoundSocket());
+    EXPECT_EQ(clientIPAndPort.first, "127.0.0.1");
+    EXPECT_EQ(clientIPAndPort.second, 8011);
+}
+
+TEST(TestSrt, AutomaticPortSelection) {
+    SRTNet server;
+    SRTNet client;
+
+    auto serverCtx = std::make_shared<SRTNet::NetworkConnection>();
+    auto clientCtx = std::make_shared<SRTNet::NetworkConnection>();
+    clientCtx->mObject = 42;
+
+    std::condition_variable connectedCondition;
+    std::mutex connectedMutex;
+    bool connected = false;
+
+    // notice when client connects to server
+    server.clientConnected = [&](struct sockaddr& sin, SRTSOCKET newSocket,
+                                 std::shared_ptr<SRTNet::NetworkConnection>& ctx) {
+        {
+            std::lock_guard<std::mutex> lock(connectedMutex);
+            connected = true;
+        }
+        connectedCondition.notify_one();
+        auto connectionCtx = std::make_shared<SRTNet::NetworkConnection>();
+        connectionCtx->mObject = 1111;
+        return connectionCtx;
+    };
+
+    const uint16_t kAnyPort = 0;
+
+    ASSERT_TRUE(server.startServer("0.0.0.0", kAnyPort, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
+
+    std::pair<std::string, uint16_t> serverIPAndPort = getBindIpAndPortFromSRTSocket(server.getBoundSocket());
+    EXPECT_EQ(serverIPAndPort.first, "0.0.0.0");
+    EXPECT_GT(serverIPAndPort.second, 1024); // We expect it won't pick a privileged port
+
+    ASSERT_TRUE(client.startClient("127.0.0.1", serverIPAndPort.second, "0.0.0.0", kAnyPort, 16, 1000, 100, clientCtx,
+                                   SRT_LIVE_MAX_PLSIZE, kValidPsk));
+
+    // check for client connecting
+    {
+        std::unique_lock<std::mutex> lock(connectedMutex);
+        bool successfulWait = connectedCondition.wait_for(lock, std::chrono::seconds(2), [&]() { return connected; });
+        ASSERT_TRUE(successfulWait) << "Timeout waiting for client to connect";
+    }
+
+    std::pair<std::string, uint16_t> clientIPAndPort = getBindIpAndPortFromSRTSocket(client.getBoundSocket());
+    EXPECT_EQ(clientIPAndPort.first, "127.0.0.1");
+    EXPECT_GT(clientIPAndPort.second, 1024); // We expect it won't pick a privileged port
+    EXPECT_NE(clientIPAndPort.second, serverIPAndPort.second);
+
+    size_t nClients = 0;
+    server.getActiveClients([&](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>>& activeClients) {
+        nClients = activeClients.size();
+        for (const auto& socketNetworkConnectionPair : activeClients) {
+            std::pair<std::string, uint16_t> peerIPAndPort =
+                getPeerIpAndPortFromSRTSocket(socketNetworkConnectionPair.first);
+            EXPECT_EQ(peerIPAndPort.first, "127.0.0.1");
+            EXPECT_EQ(peerIPAndPort.second, clientIPAndPort.second);
+
+            std::pair<std::string, uint16_t> ipAndPort =
+                getBindIpAndPortFromSRTSocket(socketNetworkConnectionPair.first);
+            EXPECT_EQ(ipAndPort.first, "127.0.0.1");
+            EXPECT_EQ(ipAndPort.second, serverIPAndPort.second);
+        }
+    });
+    EXPECT_EQ(nClients, 1);
 }
