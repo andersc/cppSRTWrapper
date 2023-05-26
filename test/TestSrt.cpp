@@ -61,11 +61,11 @@ TEST(TestSrt, StartStop) {
     SRTNet client;
 
     auto serverCtx = std::make_shared<SRTNet::NetworkConnection>();
-    EXPECT_FALSE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx))
+    EXPECT_FALSE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, serverCtx))
         << "Expect to fail without providing clientConnected callback";
     auto clientCtx = std::make_shared<SRTNet::NetworkConnection>();
     clientCtx->mObject = 42;
-    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk))
+    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk))
         << "Expect to fail with no server started";
 
     std::condition_variable connectedCondition;
@@ -85,8 +85,8 @@ TEST(TestSrt, StartStop) {
         return connectionCtx;
     };
 
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
-    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     // check for client connecting
     {
@@ -135,7 +135,7 @@ TEST(TestSrt, StartStop) {
     // start a new client and stop the server
     connected = false;
     SRTNet client2;
-    ASSERT_TRUE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
     // check for client connecting
     {
         std::unique_lock<std::mutex> lock(connectedMutex);
@@ -160,17 +160,17 @@ TEST(TestSrt, TestPsk) {
     auto ctx = std::make_shared<SRTNet::NetworkConnection>();
     server.clientConnected = [&](struct sockaddr& sin, SRTSOCKET newSocket,
                                  std::shared_ptr<SRTNet::NetworkConnection>& ctx) { return ctx; };
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, ctx));
-    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, kInvalidPsk))
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, ctx));
+    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, 5000, kInvalidPsk))
         << "Expect to fail when using incorrect PSK";
 
     ASSERT_TRUE(server.stop());
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, ctx));
-    EXPECT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, ctx));
+    EXPECT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     ASSERT_TRUE(server.stop());
     ASSERT_TRUE(client.stop());
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, "", false, ctx));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, "", false, ctx));
     EXPECT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE));
 }
 
@@ -195,8 +195,8 @@ TEST(TestSrt, SendReceive) {
     };
 
     // start server and client
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
-    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     std::vector<uint8_t> sendBuffer(1000);
     std::condition_variable serverCondition;
@@ -282,8 +282,8 @@ TEST(TestSrt, LargeMessage) {
     };
 
     // start server and client
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
-    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     std::vector<uint8_t> sendBuffer(kMaxMessageSize + 1);
     std::fill(sendBuffer.begin(), sendBuffer.end(), 1);
@@ -311,8 +311,8 @@ TEST(TestSrt, DISABLED_RejectConnection) {
     };
 
     auto ctx = std::make_shared<SRTNet::NetworkConnection>();
-    EXPECT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, ctx));
-    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, kValidPsk))
+    EXPECT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, ctx));
+    EXPECT_FALSE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, ctx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk))
         << "Expected client connection rejected";
 
     {
@@ -383,8 +383,8 @@ TEST(TestSrt, SingleSender) {
         return connectionCtx;
     };
 
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, true, serverCtx));
-    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8009, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, true, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     // check for client connecting
     {
@@ -413,7 +413,7 @@ TEST(TestSrt, SingleSender) {
     // start a new client, should fail since we only accept one single client
     connected = false;
     SRTNet client2;
-    ASSERT_FALSE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, kValidPsk));
+    ASSERT_FALSE(client2.startClient("127.0.0.1", 8009, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     server.getActiveClients([&](std::map<SRTSOCKET, std::shared_ptr<SRTNet::NetworkConnection>>& activeClients) {
         nClients = activeClients.size();
@@ -453,8 +453,8 @@ TEST(TestSrt, BindAddressForCaller) {
         return connectionCtx;
     };
 
-    ASSERT_TRUE(server.startServer("127.0.0.1", 8010, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
-    ASSERT_TRUE(client.startClient("127.0.0.1", 8010, "0.0.0.0", 8011, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE,
+    ASSERT_TRUE(server.startServer("127.0.0.1", 8010, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, serverCtx));
+    ASSERT_TRUE(client.startClient("127.0.0.1", 8010, "0.0.0.0", 8011, 16, 1000, 100, clientCtx, SRT_LIVE_MAX_PLSIZE, 5000,
                                    kValidPsk));
 
     // check for client connecting
@@ -517,14 +517,14 @@ TEST(TestSrt, AutomaticPortSelection) {
 
     const uint16_t kAnyPort = 0;
 
-    ASSERT_TRUE(server.startServer("0.0.0.0", kAnyPort, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, kValidPsk, false, serverCtx));
+    ASSERT_TRUE(server.startServer("0.0.0.0", kAnyPort, 16, 1000, 100, SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk, false, serverCtx));
 
     std::pair<std::string, uint16_t> serverIPAndPort = getBindIpAndPortFromSRTSocket(server.getBoundSocket());
     EXPECT_EQ(serverIPAndPort.first, "0.0.0.0");
     EXPECT_GT(serverIPAndPort.second, 1024); // We expect it won't pick a privileged port
 
     ASSERT_TRUE(client.startClient("127.0.0.1", serverIPAndPort.second, "0.0.0.0", kAnyPort, 16, 1000, 100, clientCtx,
-                                   SRT_LIVE_MAX_PLSIZE, kValidPsk));
+                                   SRT_LIVE_MAX_PLSIZE, 5000, kValidPsk));
 
     // check for client connecting
     {
