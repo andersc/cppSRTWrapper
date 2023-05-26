@@ -98,6 +98,7 @@ bool SRTNet::startServer(const std::string& ip,
                          int32_t latency,
                          int overhead,
                          int mtu,
+                         int32_t peerIdleTimeout,
                          const std::string& psk,
                          bool singleSender,
                          std::shared_ptr<NetworkConnection> ctx) {
@@ -173,6 +174,12 @@ bool SRTNet::startServer(const std::string& ip,
             SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PASSPHRASE: " << srt_getlasterror_str());
             return false;
         }
+    }
+
+    result = srt_setsockflag(mContext, SRTO_PEERIDLETIMEO, &peerIdleTimeout, sizeof(peerIdleTimeout));
+    if (result == SRT_ERROR) {
+        SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag : SRTO_PEERIDLETIMEO" << srt_getlasterror_str());
+        return false;
     }
 
     std::optional<sockaddr_in> ipv4Address = socketAddress.getIPv4();
@@ -306,8 +313,9 @@ bool SRTNet::startClient(const std::string& host,
                          int overhead,
                          std::shared_ptr<NetworkConnection>& ctx,
                          int mtu,
+                         int32_t peerIdleTimeout,
                          const std::string& psk) {
-    return startClient(host, port, "0.0.0.0", 0, reorder, latency, overhead, ctx, mtu, psk);
+    return startClient(host, port, "0.0.0.0", 0, reorder, latency, overhead, ctx, mtu, peerIdleTimeout, psk);
 }
 
 // Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com
@@ -321,6 +329,7 @@ bool SRTNet::startClient(const std::string& host,
                          int overhead,
                          std::shared_ptr<NetworkConnection>& ctx,
                          int mtu,
+                         int32_t peerIdleTimeout,
                          const std::string& psk) {
     std::lock_guard<std::mutex> lock(mNetMtx);
     if (mCurrentMode != Mode::unknown) {
@@ -385,6 +394,12 @@ bool SRTNet::startClient(const std::string& host,
             SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag SRTO_PASSPHRASE: " << srt_getlasterror_str());
             return false;
         }
+    }
+
+    result = srt_setsockflag(mContext, SRTO_PEERIDLETIMEO, &peerIdleTimeout, sizeof(peerIdleTimeout));
+    if (result == SRT_ERROR) {
+        SRT_LOGGER(true, LOGG_FATAL, "srt_setsockflag : SRTO_PEERIDLETIMEO" << srt_getlasterror_str());
+        return false;
     }
 
     // Set local interface to bind to

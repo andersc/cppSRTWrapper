@@ -74,6 +74,8 @@ public:
      * @param latency Max re-send window (ms) / also the delay of transmission
      * @param overhead % extra of the BW that will be allowed for re-transmission packets
      * @param mtu sets the MTU
+     * @param peerIdleTimeout Optional Connection considered broken if no packet received before this timeout.
+     * Defaults to 5 seconds.
      * @param psk Optional Pre Shared Key (AES-128)
      * @param singleSender set to true to accept just one sender to connect to the server, otherwise the server will
      * keep waiting and accepting more incoming sender connections
@@ -86,6 +88,7 @@ public:
                      int32_t latency,
                      int overhead,
                      int mtu,
+                     int32_t peerIdleTimeout = 5000,
                      const std::string& psk = "",
                      bool singleSender = false,
                      std::shared_ptr<NetworkConnection> ctx = {});
@@ -101,6 +104,8 @@ public:
      * @param overhead % extra of the BW that will be allowed for re-transmission packets
      * @param ctx the context used in the receivedData and receivedDataNoCopy callback
      * @param mtu sets the MTU
+     * @param peerIdleTimeout Optional Connection considered broken if no packet received before this timeout.
+     * Defaults to 5 seconds.
      * @param psk Optional Pre Shared Key (AES-128)
      * @return true if client was able to connect to the server
      */
@@ -111,6 +116,7 @@ public:
                      int overhead,
                      std::shared_ptr<NetworkConnection>& ctx,
                      int mtu,
+                     int32_t peerIdleTimeout = 5000,
                      const std::string& psk = "");
 
     /**
@@ -126,6 +132,8 @@ public:
      * @param overhead % extra of the BW that will be allowed for re-transmission packets
      * @param ctx the context used in the receivedData and receivedDataNoCopy callback
      * @param mtu sets the MTU
+     * @param peerIdleTimeout Optional Connection considered broken if no packet received before this timeout.
+     * Defaults to 5 seconds.
      * @param psk Optional Pre Shared Key (AES-128)
      * @return true if client was able to connect to the server
      */
@@ -138,6 +146,7 @@ public:
                      int overhead,
                      std::shared_ptr<NetworkConnection>& ctx,
                      int mtu,
+                     int32_t peerIdleTimeout = 5000,
                      const std::string& psk = "");
 
     /**
