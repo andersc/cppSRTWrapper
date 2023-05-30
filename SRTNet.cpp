@@ -315,7 +315,7 @@ bool SRTNet::startClient(const std::string& host,
                          int mtu,
                          int32_t peerIdleTimeout,
                          const std::string& psk) {
-    return startClient(host, port, "0.0.0.0", 0, reorder, latency, overhead, ctx, mtu, peerIdleTimeout, psk);
+    return startClient(host, port, "", 0, reorder, latency, overhead, ctx, mtu, peerIdleTimeout, psk);
 }
 
 // Host can provide a IP or name meaning any IPv4 or IPv6 address or name type www.google.com
@@ -402,35 +402,45 @@ bool SRTNet::startClient(const std::string& host,
         return false;
     }
 
-    // Set local interface to bind to
-    SocketAddress localSocketAddress(localHost, localPort);
+    if (!localHost.empty() || localPort != 0) {
+        // Set local interface to bind to
 
-    std::optional<sockaddr_in> localIPv4Address = localSocketAddress.getIPv4();
-    if (localIPv4Address.has_value()) {
-        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&localIPv4Address.value()),
-                          sizeof(localIPv4Address.value()));
-        if (result == SRT_ERROR) {
-            SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+        if (localHost.empty()) {
+            SRT_LOGGER(true, LOGG_FATAL,
+                       "Local port was provided but local IP is not set, cannot bind to local address");
             srt_close(mContext);
             return false;
         }
-    }
 
-    std::optional<sockaddr_in6> localIPv6Address = localSocketAddress.getIPv6();
-    if (localIPv6Address.has_value()) {
-        result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&localIPv6Address.value()),
-                          sizeof(localIPv6Address.value()));
-        if (result == SRT_ERROR) {
-            SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+        SocketAddress localSocketAddress(localHost, localPort);
+
+        std::optional<sockaddr_in> localIPv4Address = localSocketAddress.getIPv4();
+        if (localIPv4Address.has_value()) {
+            result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&localIPv4Address.value()),
+                              sizeof(localIPv4Address.value()));
+            if (result == SRT_ERROR) {
+                SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+                srt_close(mContext);
+                return false;
+            }
+        }
+
+        std::optional<sockaddr_in6> localIPv6Address = localSocketAddress.getIPv6();
+        if (localIPv6Address.has_value()) {
+            result = srt_bind(mContext, reinterpret_cast<sockaddr*>(&localIPv6Address.value()),
+                              sizeof(localIPv6Address.value()));
+            if (result == SRT_ERROR) {
+                SRT_LOGGER(true, LOGG_FATAL, "srt_bind: " << srt_getlasterror_str());
+                srt_close(mContext);
+                return false;
+            }
+        }
+
+        if (!localIPv4Address.has_value() && !localIPv6Address.has_value()) {
+            SRT_LOGGER(true, LOGG_FATAL, "Failed to parse local socket address.");
             srt_close(mContext);
             return false;
         }
-    }
-
-    if (!localIPv4Address.has_value() && !localIPv6Address.has_value()) {
-        SRT_LOGGER(true, LOGG_FATAL, "Failed to parse local socket address");
-        srt_close(mContext);
-        return false;
     }
 
     // Get all remote addresses for connection
