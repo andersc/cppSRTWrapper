@@ -62,6 +62,15 @@ public:
 
     SRTNet();
 
+    /**
+     *
+     * @brief Constructor that also sets a log handler
+     * @param handler The log handler to be used
+     * @param loglevel The log level to use
+     *
+     **/
+    SRTNet(SRT_LOG_HANDLER_FN* handler, int loglevel);
+
     virtual ~SRTNet();
 
     /**
@@ -218,6 +227,28 @@ public:
     */
     Mode getCurrentMode() const;
 
+    /**
+     *
+     * @brief Default log handler which outputs the message to std::cout
+     * @param opaque not used
+     * @param level the log level of this message
+     * @param file name of the file where this message is logged
+     * @param line line number in the file
+     * @param area not used
+     * @param message the line to be logged
+     *
+     */
+    static void defaultLogHandler(void* opaque, int level, const char* file, int line, const char* area, const char* message);
+
+    /**
+     *
+     * @brief Set log handler
+     * @param handler the new log handler to be used
+     * @param loglevel the log level to use
+     *
+     */
+    void setLogHandler(SRT_LOG_HANDLER_FN* handler, int loglevel);
+
     /// Callback handling connecting clients (only server mode)
     std::function<std::shared_ptr<NetworkConnection>(struct sockaddr& sin,
                                                      SRTSOCKET newSocket,
@@ -257,6 +288,8 @@ private:
     void clientWorker();
 
     void closeAllClientSockets();
+
+    SRT_LOG_HANDLER_FN* logHandler = defaultLogHandler;
 
     // Server active? true == yes
     std::atomic<bool> mServerActive = {false};

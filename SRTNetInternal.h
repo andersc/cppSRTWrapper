@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <sys/syslog.h>
 
 // Global Logger -- Start
 #define LOGG_NOTIFY 1
@@ -18,16 +19,18 @@
 #ifdef DEBUG
 #define SRT_LOGGER(l,g,f) \
 { \
-std::ostringstream a; \
-if (g == (LOGG_NOTIFY & (LOGG_MASK))) {a << "Notification: ";} \
-else if (g == (LOGG_WARN & (LOGG_MASK))) {a << "Warning: ";} \
-else if (g == (LOGG_ERROR & (LOGG_MASK))) {a << "Error: ";} \
-else if (g == (LOGG_FATAL & (LOGG_MASK))) {a << "Fatal: ";} \
-if (a.str().length()) { \
-if (l) {a << __FILE__ << " " << __LINE__ << " ";} \
-a << f << std::endl; \
-std::cout << a.str(); \
-} \
+  if (g & LOGG_MASK) { \
+    std::ostringstream a; \
+    if (SRTNet::logHandler == SRTNet::defaultLogHandler) { \
+      if (g == (LOGG_NOTIFY & (LOGG_MASK))) {a << "Notification: ";} \
+      else if (g == (LOGG_WARN & (LOGG_MASK))) {a << "Warning: ";} \
+      else if (g == (LOGG_ERROR & (LOGG_MASK))) {a << "Error: ";} \
+      else if (g == (LOGG_FATAL & (LOGG_MASK))) {a << "Fatal: ";} \
+      if (l) {a << __FILE__ << " " << __LINE__ << " ";} \
+    } \
+    a << f; \
+    SRTNet::logHandler(nullptr, g, __FILE__, __LINE__, nullptr, a.str().c_str()); \
+  } \
 }
 #else
 #define SRT_LOGGER(l,g,f)
