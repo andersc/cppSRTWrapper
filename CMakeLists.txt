@@ -83,8 +83,13 @@ message(STATUS "GTEST_INCLUDE_DIR='${GTEST_INCLUDE_DIRS}'")
 add_executable(runUnitTests
         ${CMAKE_CURRENT_SOURCE_DIR}/test/TestSrt.cpp
 )
-target_compile_options(runUnitTests PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-function)
 
+#if(MSVC)
+IF (WIN32)
+    target_compile_options(runUnitTests PRIVATE /W4 /WX)
+ELSE()
+    target_compile_options(runUnitTests PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-function)
+ENDIF()
 target_include_directories(runUnitTests
         PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
