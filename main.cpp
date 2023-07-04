@@ -179,7 +179,7 @@ int main(int argc, const char *argv[]) {
      * overhead: The % overhead tolerated for retransmits relative the original data stream.
      * mtu: max 1456
      */
-    if (!gSRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100, 1456, "Th1$_is_4_0pt10N4L_P$k", lConn1)) {
+    if (!gSRTNetServer.startServer("0.0.0.0", 8000, 16, 1000, 100, 1456, 5000, "Th1$_is_4_0pt10N4L_P$k", false, lConn1)) {
         std::cout << "SRT Server failed to start." << std::endl;
         return EXIT_FAILURE;
     }
@@ -193,7 +193,7 @@ int main(int argc, const char *argv[]) {
 
     gSRTNetClient1.receivedData = std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2,
                                             std::placeholders::_3, std::placeholders::_4);
-    if (!gSRTNetClient1.startClient("127.0.0.1", 8000, 16, 1000, 100, lClient1Connection, 1456,
+    if (!gSRTNetClient1.startClient("127.0.0.1", 8000, 16, 1000, 100, lClient1Connection, 1456, 5000,
                                     "Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT client1 failed starting." << std::endl;
         return EXIT_FAILURE;
@@ -205,7 +205,7 @@ int main(int argc, const char *argv[]) {
     lClient2Connection->mObject = std::move(lpMyClass2);
     gSRTNetClient2.receivedData = std::bind(&handleDataClient, std::placeholders::_1, std::placeholders::_2,
                                             std::placeholders::_3, std::placeholders::_4);
-    if (!gSRTNetClient2.startClient("127.0.0.1", 8000, 16, 1000, 100, lClient2Connection, 1456,
+    if (!gSRTNetClient2.startClient("127.0.0.1", 8000, 16, 1000, 100, lClient2Connection, 1456, 5000,
                                     "Th1$_is_4_0pt10N4L_P$k")) {
         std::cout << "SRT client2 failed starting." << std::endl;
         return EXIT_FAILURE;
