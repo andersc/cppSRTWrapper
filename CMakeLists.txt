@@ -84,10 +84,7 @@ add_executable(runUnitTests
         ${CMAKE_CURRENT_SOURCE_DIR}/test/TestSrt.cpp
 )
 
-#if(MSVC)
-IF (WIN32)
-    target_compile_options(runUnitTests PRIVATE /W4 /WX)
-ELSE()
+IF (NOT MSVC)
     target_compile_options(runUnitTests PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-function)
 ENDIF()
 target_include_directories(runUnitTests
