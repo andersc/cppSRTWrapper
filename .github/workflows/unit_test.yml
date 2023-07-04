@@ -13,6 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install GTest
+        run: sudo apt install libgtest-dev
       - name: CMake set-up for release
         run: |
           rm -rf build
@@ -34,6 +36,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Install GTest
+        run: sudo apt install libgtest-dev
       - name: CMake set-up for debug
         run: |
           rm -rf build
