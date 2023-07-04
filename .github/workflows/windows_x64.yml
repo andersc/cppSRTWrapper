@@ -18,7 +18,7 @@ jobs:
     - name: Install gtest
       uses: MarkusJx/googletest-installer@v1.1
     - name: CMake set-up
-      run: cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_BUILD_TYPE=Release .
+      run: cmake -S . `-D CMAKE_BUILD_TYPE=Release -D GTEST_ROOT=D:/gtest -D CMAKE_GENERATOR_PLATFORM=x64`
     - name: make
       run: cmake --build . --config Release
     - uses: actions/upload-artifact@v2
