@@ -94,4 +94,4 @@ target_include_directories(runUnitTests
         SYSTEM
         ${GTEST_INCLUDE_DIRS})
 
-target_link_libraries(runUnitTests srtnet GTest::gtest GTest::gtest_main Threads::Threads)
+target_link_libraries(runUnitTests srtnet GTest::gtest_main Threads::Threads)
