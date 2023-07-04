@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.10)
 project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
+find_package(GTest REQUIRED)
 
 #If no build type is set then force Release
 IF( NOT CMAKE_BUILD_TYPE )
@@ -26,7 +28,8 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 include(ExternalProject)
 ExternalProject_Add(project_srt
         GIT_REPOSITORY https://github.com/Haivision/srt.git
-        GIT_TAG v1.4.3
+        #  We use the git commit hash because it is faster
+        GIT_TAG 0bc3b03202b3159fc9b085b3ae6d66ec071c25d6 # v1.5.1
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BUILD_COMMAND cmake --build ${CMAKE_CURRENT_SOURCE_DIR}/srt --config ${CMAKE_BUILD_TYPE} --target srt_static
@@ -39,7 +42,7 @@ ExternalProject_Add(project_srt
 
 ExternalProject_Add(project_srt_win
         GIT_REPOSITORY https://github.com/Haivision/srt.git
-        GIT_TAG v1.4.3
+        GIT_TAG v1.5.1
         SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/srt
         CONFIGURE_COMMAND cmake -DCMAKE_GENERATOR_PLATFORM=x64 -DENABLE_STDCXX_SYNC=ON ${CMAKE_CURRENT_SOURCE_DIR}/srt
@@ -69,4 +72,24 @@ target_link_libraries(srtnet PUBLIC srt ${OPENSSL_LIBRARIES})
 add_executable(cppSRTWrapper main.cpp)
 target_link_libraries(cppSRTWrapper srtnet Threads::Threads)
 
+#
+# Build unit tests using GoogleTest
+#
 
+message(STATUS "GTEST_INCLUDE_DIR='${GTEST_INCLUDE_DIRS}'")
+
+#enable_testing()
+
+add_executable(runUnitTests
+        ${CMAKE_CURRENT_SOURCE_DIR}/test/TestSrt.cpp
+)
+target_compile_options(runUnitTests PRIVATE -Wall -Wextra -Wno-unused-parameter -Wno-unused-function)
+
+target_include_directories(runUnitTests
+        PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/test
+        SYSTEM
+        ${GTEST_INCLUDE_DIRS})
+
+target_link_libraries(runUnitTests srtnet GTest::gtest GTest::gtest_main Threads::Threads)
