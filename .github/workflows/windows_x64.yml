@@ -13,19 +13,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Get OpenSSL
+    - name: Install OpenSSL
       run: choco install openssl
-    - name: Install gtest
-      uses: MarkusJx/googletest-installer@v1.1
+    - name: Install GTest
+      run: |
+        git clone --branch v1.13.0 https://github.com/google/googletest
+        cd googletest
+        cmake -DCMAKE_INSTALL_PREFIX=D:/gtest -Dgtest_force_shared_crt=ON -DBUILD_GMOCK=OFF -DBUILD_GTEST=ON .
+        cmake --build . --config Release --target INSTALL
     - name: CMake set-up
-      run: cmake -S . `-D CMAKE_BUILD_TYPE=Release -D GTEST_ROOT=D:/gtest -D CMAKE_GENERATOR_PLATFORM=x64`
+      run: cmake -S . -DCMAKE_BUILD_TYPE=Release -DGTEST_ROOT=D:/gtest
     - name: make
       run: cmake --build . --config Release
     - uses: actions/upload-artifact@v2
       with:
-        name: libsrtnet_win_x64
+        name: libsrtnet_win
         path: ./Release/srtnet.lib
     - uses: actions/upload-artifact@v2
       with:
-        name: libsrt_win_x64
+        name: libsrt_win
         path: ./srt/Release/srt_static.lib
