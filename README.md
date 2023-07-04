@@ -6,16 +6,16 @@ The SRT Protocol is a UDP based protocol. SRT acts as a mix of TCP and UDP where
 
 Streaming media solutions benefit from this approach and SRT is adopted widely across the media community. This C++ wrapper is simplifying implementations of SRT in C++ projects and with only a few lines of code you can create a server and/or a client. 
 
-The API of SRT has more features than what's exposed in this C++ wrapper, however the base functions exists. If you feel this wrapper is missing any functionalty or features please let me know.
+The API of SRT has more features than what's exposed in this C++ wrapper, however the base functions exists. If you feel this wrapper is missing any functionalty or features please let us know.
  
 
 **Current auto build status:**
 
-![Ubuntu 18.04](https://github.com/andersc/cppSRTWrapper/workflows/Ubuntu%2018.04/badge.svg)
+![Ubuntu](https://github.com/andersc/cppSRTWrapper/workflows/Ubuntu%2018.04/badge.svg)
 
-![macos](https://github.com/andersc/cppSRTWrapper/workflows/macos/badge.svg)
+![MacOS](https://github.com/andersc/cppSRTWrapper/workflows/macos/badge.svg)
 
-![Windows x64](https://github.com/andersc/cppSRTWrapper/workflows/Windows%20x64/badge.svg)
+![Windows](https://github.com/andersc/cppSRTWrapper/workflows/Windows%20x64/badge.svg)
 
 **Code scanning alerts**
 
@@ -30,6 +30,9 @@ Requires cmake version >= **3.10** and **C++17**
 *Linux, MacOS and Windows*
 
 (Read below for how to prepare the different systems)
+
+Observe *Windows* users need to point out where *GTest* is located 
+**-DGTEST_ROOT={Installed location}**, please see the windows action for details.
 
 **Release:**
 
@@ -69,7 +72,7 @@ EXIT_SUCCESS if all unit tests pass.)
 
 **(source_root)/srt/Release/srt_static.lib** (The SRT-lib Release build)
 
-**(source_root)/srt/Debug/srt_static.lib** (The SRT-lib Release build)
+**(source_root)/srt/Debug/srt_static.lib** (The SRT-lib Debug build)
  
 **./Release/cppSRTWrapper.exe** (Runs trough the unit tests and returns EXIT_SUCCESS if all unit tests pass. Release build)
  
@@ -83,7 +86,7 @@ EXIT_SUCCESS if all unit tests pass.)
 ```sh
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install tclsh pkg-config cmake libssl-dev build-essential
+sudo apt-get install tclsh pkg-config cmake libssl-dev build-essential libgtest-dev
 ```
 
 # Preparing MacOS
@@ -98,6 +101,7 @@ Prepare your system by installing ->
 * Then Install dependencies
 
 ```sh
+brew install googletest
 brew install cmake
 brew install openssl
 export OPENSSL_ROOT_DIR=$(brew --prefix openssl)
@@ -123,6 +127,16 @@ choco install cmake
 choco install git
 ```
 
+Install GTest in a terminal by:
+
+```
+git clone --branch v1.13.0 https://github.com/google/googletest
+cd googletest
+cmake -DCMAKE_INSTALL_PREFIX=C:/gtest -Dgtest_force_shared_crt=ON -DBUILD_GMOCK=OFF -DBUILD_GTEST=ON .
+cmake --build . --config Release --target INSTALL
+```
+
+The example above installs GTest to C:/gtest. Change the **CMAKE_INSTALL_PREFIX** if you want another location. 
 
 ## Using the SRT wrapper
 
@@ -230,9 +244,7 @@ mySRTNetClient.sendData(buffer2.data(), buffer2.size(), &thisMSGCTRL);
 
 The [SRT](https://github.com/Haivision/srt) team for all the help and positive feedback 
 
-Anders Cedronius for creating the C++ wrapper
-
-anders.cedronius(at)gmail.com
+Thanks all [contributors](https://github.com/andersc/cppSRTWrapper/graphs/contributors) for bugfixes and enhancing the solution!! 
 
 
 ## License
