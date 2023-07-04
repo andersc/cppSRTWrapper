@@ -217,10 +217,7 @@ bool SRTNet::startServer(const std::string& ip,
 void SRTNet::serverEventHandler() {
     SRT_EPOLL_EVENT ready[MAX_WORKERS];
     while (mServerActive) {
-        int ret = srt_epoll_uwait(mPollID, &ready[0], 5, 1000);
-        if (ret == MAX_WORKERS + 1) {
-            ret--;
-        }
+        int ret = srt_epoll_uwait(mPollID, &ready[0], MAX_WORKERS, 1000);
 
         if (ret > 0) {
             for (size_t i = 0; i < ret; i++) {
@@ -249,6 +246,9 @@ void SRTNet::serverEventHandler() {
                 } else if (result > 0 && receivedDataNoCopy) {
                     receivedDataNoCopy(msg, result, thisMSGCTRL, iterator->second, thisSocket);
                 }
+            }
+            if (mClientList.empty()) {
+                break;
             }
         } else if (ret == -1) {
             SRT_LOGGER(true, LOGG_ERROR, "epoll error: " << srt_getlasterror_str());

@@ -35,7 +35,7 @@
 
 #endif
 
-#define MAX_WORKERS 20 // Max number of connections to deal with each epoll
+#define MAX_WORKERS 5 // Max number of connections to deal with each epoll
 
 namespace SRTNetClearStats {
 enum SRTNetClearStats : int { no, yes };
