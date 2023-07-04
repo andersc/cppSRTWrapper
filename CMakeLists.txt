@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(cppSRTWrapper)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+enable_testing()
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
@@ -75,10 +76,6 @@ target_link_libraries(cppSRTWrapper srtnet Threads::Threads)
 #
 # Build unit tests using GoogleTest
 #
-
-message(STATUS "GTEST_INCLUDE_DIR='${GTEST_INCLUDE_DIRS}'")
-
-#enable_testing()
 
 add_executable(runUnitTests
         ${CMAKE_CURRENT_SOURCE_DIR}/test/TestSrt.cpp

@@ -20,12 +20,12 @@ std::pair<std::string, uint16_t> getBindIpAndPortFromSRTSocket(SRTSOCKET socket)
     int32_t addressSize = sizeof(decltype(address));
     EXPECT_EQ(srt_getsockname(socket, reinterpret_cast<sockaddr*>(&address), &addressSize), 0);
     if (address.ss_family == AF_INET) {
-        const sockaddr_in* socketAddressV4 = reinterpret_cast<const sockaddr_in*>(&address);
+        const auto* socketAddressV4 = reinterpret_cast<const sockaddr_in*>(&address);
         char ipv4Address[INET_ADDRSTRLEN];
         EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV4->sin_addr), ipv4Address, INET_ADDRSTRLEN), nullptr);
         return {ipv4Address, ntohs(socketAddressV4->sin_port)};
     } else if (address.ss_family == AF_INET6) {
-        const sockaddr_in6* socketAddressV6 = reinterpret_cast<const sockaddr_in6*>(&address);
+        const auto* socketAddressV6 = reinterpret_cast<const sockaddr_in6*>(&address);
         char ipv6Address[INET6_ADDRSTRLEN];
         EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV6->sin6_addr), ipv6Address, INET6_ADDRSTRLEN), nullptr);
         return {ipv6Address, ntohs(socketAddressV6->sin6_port)};
@@ -42,12 +42,12 @@ std::pair<std::string, uint16_t> getPeerIpAndPortFromSRTSocket(SRTSOCKET socket)
     int32_t addressSize = sizeof(decltype(address));
     EXPECT_EQ(srt_getpeername(socket, reinterpret_cast<sockaddr*>(&address), &addressSize), 0);
     if (address.ss_family == AF_INET) {
-        const sockaddr_in* socketAddressV4 = reinterpret_cast<const sockaddr_in*>(&address);
+        const auto* socketAddressV4 = reinterpret_cast<const sockaddr_in*>(&address);
         char ipv4Address[INET_ADDRSTRLEN];
         EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV4->sin_addr), ipv4Address, INET_ADDRSTRLEN), nullptr);
         return {ipv4Address, ntohs(socketAddressV4->sin_port)};
     } else if (address.ss_family == AF_INET6) {
-        const sockaddr_in6* socketAddressV6 = reinterpret_cast<const sockaddr_in6*>(&address);
+        const auto* socketAddressV6 = reinterpret_cast<const sockaddr_in6*>(&address);
         char ipv6Address[INET6_ADDRSTRLEN];
         EXPECT_NE(inet_ntop(AF_INET, &(socketAddressV6->sin6_addr), ipv6Address, INET6_ADDRSTRLEN), nullptr);
         return {ipv6Address, ntohs(socketAddressV6->sin6_port)};
