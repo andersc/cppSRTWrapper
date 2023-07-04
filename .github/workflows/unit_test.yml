@@ -9,7 +9,7 @@ on:
 jobs:
   test-release:
 
-    runs-on: stardom-nuc
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
 
   test-debug:
 
-    runs-on: stardom-nuc
+    runs-on: ubuntu-22.04
 
     steps:
       - uses: actions/checkout@v2
