@@ -72,6 +72,10 @@ SRTNet::SRTNet() {
     SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet constructed");
 }
 
+SRTNet::SRTNet(SRT_LOG_HANDLER_FN* handler, int loglevel) {
+    setLogHandler(handler, loglevel);
+}
+
 SRTNet::~SRTNet() {
     stop();
     SRT_LOGGER(true, LOGG_NOTIFY, "SRTNet destruct")
@@ -518,6 +522,18 @@ SRTNet::Mode SRTNet::getCurrentMode() const {
     std::lock_guard<std::mutex> lock(mNetMtx);
     return mCurrentMode;
 }
+
+void SRTNet::defaultLogHandler(void* opaque, int level, const char* file, int line, const char* area, const char* message) {
+    std::cout << message << std::endl;
+}
+
+void SRTNet::setLogHandler(SRT_LOG_HANDLER_FN* handler, int loglevel) {
+    logHandler = handler;
+    srt_setloghandler(nullptr, handler);
+    srt_setlogflags(SRT_LOGF_DISABLE_TIME | SRT_LOGF_DISABLE_THREADNAME | SRT_LOGF_DISABLE_SEVERITY | SRT_LOGF_DISABLE_EOL);
+    srt_setloglevel(loglevel);
+}
+
 
 bool SRTNet::sendData(const uint8_t* data, size_t len, SRT_MSGCTRL* msgCtrl, SRTSOCKET targetSystem) {
     int result;
