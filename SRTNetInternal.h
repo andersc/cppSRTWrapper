@@ -10,22 +10,22 @@
 #include <sys/syslog.h>
 
 // Global Logger -- Start
-#define LOGG_NOTIFY 1
-#define LOGG_WARN 2
-#define LOGG_ERROR 4
-#define LOGG_FATAL 8
-#define LOGG_MASK  LOGG_NOTIFY | LOGG_WARN | LOGG_ERROR | LOGG_FATAL //What to logg?
+#define LOGG_NOTIFY LOG_NOTICE
+#define LOGG_WARN LOG_WARNING
+#define LOGG_ERROR LOG_ERR
+#define LOGG_FATAL LOG_CRIT
+#define LOGG_LEVEL LOGG_NOTIFY //What to logg?
 
 #ifdef DEBUG
 #define SRT_LOGGER(l,g,f) \
 { \
-  if (g & LOGG_MASK) { \
+  if (g <= LOGG_LEVEL) { \
     std::ostringstream a; \
     if (SRTNet::logHandler == SRTNet::defaultLogHandler) { \
-      if (g == (LOGG_NOTIFY & (LOGG_MASK))) {a << "Notification: ";} \
-      else if (g == (LOGG_WARN & (LOGG_MASK))) {a << "Warning: ";} \
-      else if (g == (LOGG_ERROR & (LOGG_MASK))) {a << "Error: ";} \
-      else if (g == (LOGG_FATAL & (LOGG_MASK))) {a << "Fatal: ";} \
+      if (g == LOGG_NOTIFY) {a << "Notification: ";}             \
+      else if (g == LOGG_WARN) {a << "Warning: ";} \
+      else if (g == LOGG_ERROR) {a << "Error: ";} \
+      else if (g == LOGG_FATAL) {a << "Fatal: ";} \
       if (l) {a << __FILE__ << " " << __LINE__ << " ";} \
     } \
     a << f; \
