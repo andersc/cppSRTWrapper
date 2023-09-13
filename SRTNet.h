@@ -144,7 +144,7 @@ public:
      * @param peerIdleTimeout Optional Connection considered broken if no packet received before this timeout.
      * Defaults to 5 seconds.
      * @param psk Optional Pre Shared Key (AES-128)
-     * @return true if client was able to connect to the server
+     * @return true if configuration was ok and remote IP port could be resolved, false otherwise
      */
     bool startClient(const std::string& host,
                      uint16_t port,
@@ -210,6 +210,13 @@ public:
      *
      */
     std::pair<SRTSOCKET, std::shared_ptr<NetworkConnection>> getConnectedServer();
+
+    /**
+     * 
+     * @brief Check if client is connected to remote end
+     * @returns True is client is connected to the the remote end, false otherwise
+    */
+    bool isClientConnected() const;
 
     /**
      *
@@ -289,6 +296,10 @@ private:
 
     void closeAllClientSockets();
 
+    bool createClientSocket();
+
+    void connectClient();
+
     SRT_LOG_HANDLER_FN* logHandler = defaultLogHandler;
 
     // Server active? true == yes
@@ -307,4 +318,16 @@ private:
     std::mutex mClientListMtx;
     std::shared_ptr<NetworkConnection> mClientContext = nullptr;
     std::shared_ptr<NetworkConnection> mConnectionContext = nullptr;
+    std::atomic<bool> mClientConnected = false;
+    std::string mCallerHost;
+    uint16_t mCallerPort;
+
+    std::string mCallerLocalHost;
+    uint16_t mCallerLocalPort;
+    int mCallerReorder;
+    int32_t mCallerLatency;
+    int mCallerOverhead;
+    int mCallerMtu;
+    int32_t mCallerPeerIdleTimeout;
+    std::string mCallerPsk;
 };
